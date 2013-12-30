@@ -16,7 +16,7 @@ func GenSeed(length int) ([]byte, error) {
     return b, err
 }
 
-func GenMasterKey(seed []byte) ([]byte,[]byte) {
+func Bip32_master_key(seed []byte) ([]byte,[]byte) {
     key := []byte("Bitcoin seed")
     mac := hmac.New(sha512.New, key)
 	mac.Write(seed)
