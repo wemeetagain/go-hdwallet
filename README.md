@@ -9,10 +9,10 @@ BIP 32 wallet tools
 ###Sample Use
 
         seed,_ := hdwalletutil.Gen_seed(256)
-        masterprv := Bip32_master_key(seed)
-        masterpub := Bip32_privtopub(masterprv)
-        childprv := Bip32_ckd(masterprv,0)
-        childpub := Bip32_ckd(masterpub,0)
+        masterprv := hdwalletutil.Bip32_master_key(seed)
+        masterpub := hdwalletutil.Bip32_privtopub(masterprv)
+        childprv := hdwalletutil.Bip32_ckd(masterprv,0)
+        childpub := hdwalletutil.Bip32_ckd(masterpub,0)
 
 ###Dependencies
 
