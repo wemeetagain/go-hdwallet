@@ -4,6 +4,7 @@ import (
     "crypto/sha256"
     "code.google.com/p/go.crypto/ripemd160"
     "encoding/binary"
+    "encoding/hex"
     "github.com/mndrix/btcutil"
     "math/big"
     )
@@ -60,21 +61,30 @@ func compress(x, y *big.Int) []byte {
 }
 
 func add_privkeys(k1, k2 []byte) []byte {
-    x1 := big.NewInt(0).SetBytes(k1[1:])
-    y1 := big.NewInt(0).SetBytes(k1[:1])
-    x2 := big.NewInt(0).SetBytes(k2[1:])
-    y2 := big.NewInt(0).SetBytes(k2[:1])
-    curve := btcutil.Secp256k1()
-    return compress(curve.Add(x1,y1,x2,y2))
+    i1 := big.NewInt(0).SetBytes(k1)
+    i2 := big.NewInt(0).SetBytes(k2)
+    i1.Add(i1,i2)
+    i1.Mod(i1,btcutil.Secp256k1().(*btcutil.KoblitzCurve).N)
+    k := i1.Bytes()
+    zero,_ := hex.DecodeString("00")
+    return append(zero,k...)
 }
 
 func add_pubkeys(k1, k2 []byte) []byte {
-    x1 := big.NewInt(0).SetBytes(k1[1:])
-    y1 := big.NewInt(0).SetBytes(k1[:1])
-    x2 := big.NewInt(0).SetBytes(k2[1:])
-    y2 := big.NewInt(0).SetBytes(k2[:1])
-    curve := btcutil.Secp256k1()
-    return compress(curve.Add(x1,y1,x2,y2))
+    //x1 := big.NewInt(0).SetBytes(k1[1:])
+    //y1 := big.NewInt(0).SetBytes(k1[:1])
+    //x2 := big.NewInt(0).SetBytes(k2[1:])
+    //y2 := big.NewInt(0).SetBytes(k2[:1])
+    //curve := btcutil.Secp256k1()
+    //x1,y1 := privtopub(k1)
+    //x1.Add(x1,x2)
+    //y1.Add(y1,y2)
+    i1 := big.NewInt(0).SetBytes(k1)
+    i2 := big.NewInt(0).SetBytes(k2)
+    i1.Add(i1,i2)
+    return i1.Bytes()
+    //return compress(x1,y1)
+    //return compress(curve.(*btcutil.KoblitzCurve).Add(x1,y1,x2,y2))
 }
 
 func uint32ToByte(i uint32) []byte {
