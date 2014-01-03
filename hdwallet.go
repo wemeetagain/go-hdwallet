@@ -75,7 +75,7 @@ func raw_bip32_ckd(w HDWallet, i uint32) HDWallet {
         fingerprint = hash160(privtopub(w.key))[:4]
     }
     if bytes.Compare(w.vbytes, PUBLIC) == 0 {
-        newkey = add_pubkeys(I[:32], w.key)
+        newkey = add_pubkeys(privtopub(I[:32]), w.key)
         fingerprint = hash160(w.key)[:4]
     }
     fmt.Println(len(newkey))

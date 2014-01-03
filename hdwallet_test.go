@@ -39,12 +39,13 @@ var (
 
 func TestCKDPub(t *testing.T) {
     cpub := Bip32_ckd(m_pub2,0)
-    fmt.Println(cpub)
-    fmt.Println(m_0_pub2)
-    w1 := bip32_deserialize(cpub)
-    w2 := bip32_deserialize(m_0_pub2)
-    fmt.Println(w1.key)
-    fmt.Println(w2.key)
+    if cpub != m_0_pub2 {
+        t.Errorf("%s\n%s",cpub,m_0_pub2)
+        w1 := bip32_deserialize(cpub)
+        w2 := bip32_deserialize(m_0_pub2)
+        fmt.Println(hex.EncodeToString(w1.key))
+        fmt.Println(hex.EncodeToString(w2.key))
+    }
 }
 
 func TestCKDPrv(t *testing.T) {
