@@ -1,6 +1,7 @@
 package hdwalletutil
 
 import (
+    "fmt"
     "testing"
     "encoding/hex"
     )
@@ -36,6 +37,28 @@ var (
     m_0_2147483647p_1_2147483646p_2_prv2 string = "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j"
     )
 
+func TestCKDPub(t *testing.T) {
+    cpub := Bip32_ckd(m_pub2,0)
+    fmt.Println(cpub)
+    fmt.Println(m_0_pub2)
+    w1 := bip32_deserialize(cpub)
+    w2 := bip32_deserialize(m_0_pub2)
+    fmt.Println(w1.key)
+    fmt.Println(w2.key)
+}
+
+func TestCKDPrv(t *testing.T) {
+    cprv := Bip32_ckd(m_prv2,0)
+    if cprv != m_0_prv2 {
+        t.Errorf("%s\n%s",cprv,m_0_prv2)
+        w1 := bip32_deserialize(cprv)
+        w2 := bip32_deserialize(m_0_prv2)
+        fmt.Println(w1.key)
+        fmt.Println(w2.key)
+        fmt.Println(len(cprv))
+        fmt.Println(len(m_0_prv2))
+    }
+}
 
 func TestVector1(t *testing.T) {
     seed, _ := hex.DecodeString(masterhex1)
@@ -48,15 +71,28 @@ func TestVector1(t *testing.T) {
         t.Errorf("m public key was %s, should have been %s",masterpub,m_pub1)
     }
     var i uint32
-    i = 2147483648
+    i = 0x80000000
     var prv string
     prv = Bip32_ckd(masterprv,i)
     if prv != m_0p_prv1 {
         t.Errorf("m/0' private key was %s, should have been %s",prv,m_0p_prv1)
+        //w1 := bip32_deserialize(prv)
+        //w2 := bip32_deserialize(m_0p_prv1)
+        //fmt.Println(w1.key)
+        //fmt.Println(w2.key)
     }
-    i = 1
+    i = 0x00000001
     prv = Bip32_ckd(m_0p_prv1,1)
     if prv != m_0p_1_prv1 {
         t.Errorf("m/0'/1 private key was %s, should have been %s",prv,m_0p_1_prv1)
+    }
+}
+
+func TestSerialize(t *testing.T) {
+    if m_prv2 != bip32_serialize(bip32_deserialize(m_prv2)) {
+        t.Errorf("private key not de/reserializing properly")
+    }
+    if m_pub2 != bip32_serialize(bip32_deserialize(m_pub2)) {
+        t.Errorf("public key not de/reserializing properly")
     }
 }
