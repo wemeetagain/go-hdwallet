@@ -60,6 +60,27 @@ func compress(x, y *big.Int) []byte {
     return append(b[1:],rest...)
 }
 
+//2.3.4 of SEC1 - http://www.secg.org/index.php?action=secg,docs_secg
+func expand(key []byte) (*big.Int, *big.Int) {
+    curve := btcutil.Secp256k1().(*btcutil.KoblitzCurve)
+    params := curve.Params()
+    exp := big.NewInt(1)
+    exp.Add(params.P,exp)
+    exp.Div(exp,big.NewInt(4))
+    x := big.NewInt(0).SetBytes(key[1:33])
+    y := big.NewInt(0).SetBytes(key[:1])
+    beta := big.NewInt(0)
+    beta.Exp(x,big.NewInt(3),nil)
+    beta.Add(beta,big.NewInt(7))
+    beta.Exp(beta,exp,params.P)
+    if(y.Add(beta,y).Mod(y,big.NewInt(2)).Int64() == 0) {
+        y = beta
+    } else {
+        y = beta.Sub(params.P,beta)
+    }
+    return x,y
+}
+
 func add_privkeys(k1, k2 []byte) []byte {
     i1 := big.NewInt(0).SetBytes(k1)
     i2 := big.NewInt(0).SetBytes(k2)
@@ -71,20 +92,10 @@ func add_privkeys(k1, k2 []byte) []byte {
 }
 
 func add_pubkeys(k1, k2 []byte) []byte {
-    //x1 := big.NewInt(0).SetBytes(k1[1:])
-    //y1 := big.NewInt(0).SetBytes(k1[:1])
-    //x2 := big.NewInt(0).SetBytes(k2[1:])
-    //y2 := big.NewInt(0).SetBytes(k2[:1])
-    //curve := btcutil.Secp256k1()
-    //x1,y1 := privtopub(k1)
-    //x1.Add(x1,x2)
-    //y1.Add(y1,y2)
-    i1 := big.NewInt(0).SetBytes(k1)
-    i2 := big.NewInt(0).SetBytes(k2)
-    i1.Add(i1,i2)
-    return i1.Bytes()
-    //return compress(x1,y1)
-    //return compress(curve.(*btcutil.KoblitzCurve).Add(x1,y1,x2,y2))
+    curve := btcutil.Secp256k1().(*btcutil.KoblitzCurve)
+    x1,y1 := expand(k1)
+    x2,y2 := expand(k2)
+    return compress(curve.Add(x1,y1,x2,y2))
 }
 
 func uint32ToByte(i uint32) []byte {
