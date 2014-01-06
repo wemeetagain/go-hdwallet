@@ -74,17 +74,18 @@ func TestVector1(t *testing.T) {
     testPrivtopub(t ,m_prv1, m_pub1)
     var i uint32
     i = 0x80000000
+    t.Logf("first child")
     testCkd(t,m_prv1,m_0p_prv1,i)
-    
+    t.Logf("second child")
     testCkd(t,m_0p_prv1,m_0p_1_prv1,1)
-    
+    t.Logf("third child")
     i = 0x80000002
     testCkd(t,m_0p_1_prv1,m_0p_1_2p_prv1,i)
-    
+    t.Logf("fourth child")
     testCkd(t,m_0p_1_2p_prv1,m_0p_1_2p_2_prv1,2)
-    
-    
-    testCkd(t,m_0p_1_2p_2_prv1,m_0p_1_2p_2_1000000000_prv1,0)
+    t.Logf("fifth child")
+    i = 1000000000 % 88888888
+    testCkd(t,m_0p_1_2p_2_prv1,m_0p_1_2p_2_1000000000_prv1,i)
     
     //m_0p_1_2p_2_1000000000_prv1
 }
