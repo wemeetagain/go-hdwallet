@@ -1,7 +1,6 @@
 package hdwalletutil
 
 import (
-    "fmt"
     "testing"
     "encoding/hex"
     )
@@ -38,55 +37,56 @@ var (
     )
 
 func TestCKDPub(t *testing.T) {
-    cpub := Bip32_ckd(m_pub2,0)
-    if cpub != m_0_pub2 {
-        t.Errorf("%s\n%s",cpub,m_0_pub2)
-        w1 := bip32_deserialize(cpub)
-        w2 := bip32_deserialize(m_0_pub2)
-        fmt.Println(hex.EncodeToString(w1.key))
-        fmt.Println(hex.EncodeToString(w2.key))
-    }
+    testCkd(t,m_pub2,m_0_pub2,0)
 }
 
 func TestCKDPrv(t *testing.T) {
-    cprv := Bip32_ckd(m_prv2,0)
-    if cprv != m_0_prv2 {
-        t.Errorf("%s\n%s",cprv,m_0_prv2)
-        w1 := bip32_deserialize(cprv)
-        w2 := bip32_deserialize(m_0_prv2)
-        fmt.Println(w1.key)
-        fmt.Println(w2.key)
-        fmt.Println(len(cprv))
-        fmt.Println(len(m_0_prv2))
+    testCkd(t,m_prv2,m_0_prv2,0)
+}
+
+func testCkd(t *testing.T, key, ref_key string, i uint32) {
+    child_key := Bip32_ckd(key, i)
+    if child_key != ref_key {
+        t.Errorf("\n%s\nsupposed to be\n%s",child_key,ref_key)
+        w1 := bip32_deserialize(child_key)
+        w2 := bip32_deserialize(ref_key)
+        t.Errorf("\n%x\n%x",w1.chaincode,w2.chaincode)
+    }
+}
+
+func testMasterKey(t *testing.T, seed []byte, ref_key string) {
+    masterprv := Bip32_master_key(seed)
+    if masterprv != ref_key {
+        t.Errorf("\n%s\nsupposed to be\n%s",masterprv,ref_key)
+    }
+}
+
+func testPrivtopub(t *testing.T, prv, ref_pub string) {
+    pub := Bip32_privtopub(prv)
+    if pub != ref_pub {
+        t.Errorf("\n%s\nsupposed to be\n%s",pub,ref_pub)
     }
 }
 
 func TestVector1(t *testing.T) {
     seed, _ := hex.DecodeString(masterhex1)
-    masterprv := Bip32_master_key(seed)
-    if masterprv != m_prv1 {
-        t.Errorf("m private key was %s, should have been %s",masterprv,m_prv1)
-    }
-    masterpub := Bip32_privtopub(masterprv)
-    if masterpub != m_pub1 {
-        t.Errorf("m public key was %s, should have been %s",masterpub,m_pub1)
-    }
+    testMasterKey(t, seed, m_prv1)
+    testPrivtopub(t ,m_prv1, m_pub1)
     var i uint32
     i = 0x80000000
-    var prv string
-    prv = Bip32_ckd(masterprv,i)
-    if prv != m_0p_prv1 {
-        t.Errorf("m/0' private key was %s, should have been %s",prv,m_0p_prv1)
-        //w1 := bip32_deserialize(prv)
-        //w2 := bip32_deserialize(m_0p_prv1)
-        //fmt.Println(w1.key)
-        //fmt.Println(w2.key)
-    }
-    i = 0x00000001
-    prv = Bip32_ckd(m_0p_prv1,1)
-    if prv != m_0p_1_prv1 {
-        t.Errorf("m/0'/1 private key was %s, should have been %s",prv,m_0p_1_prv1)
-    }
+    testCkd(t,m_prv1,m_0p_prv1,i)
+    
+    testCkd(t,m_0p_prv1,m_0p_1_prv1,1)
+    
+    i = 0x80000002
+    testCkd(t,m_0p_1_prv1,m_0p_1_2p_prv1,i)
+    
+    testCkd(t,m_0p_1_2p_prv1,m_0p_1_2p_2_prv1,2)
+    
+    
+    testCkd(t,m_0p_1_2p_2_prv1,m_0p_1_2p_2_1000000000_prv1,0)
+    
+    //m_0p_1_2p_2_1000000000_prv1
 }
 
 func TestSerialize(t *testing.T) {
