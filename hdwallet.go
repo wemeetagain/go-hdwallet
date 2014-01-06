@@ -1,3 +1,5 @@
+//based off https://github.com/vbuterin/pybitcointools/blob/master/pybitcointools/deterministic.py
+
 package hdwalletutil
 
 import (
@@ -57,8 +59,7 @@ func raw_bip32_ckd(w HDWallet, i uint32) HDWallet {
         if bytes.Compare(w.vbytes, PUBLIC) == 0 {
             panic("Can't do private derivation on public key!")
         }
-        zero,_ := hex.DecodeString("00")
-        mac.Write(append(zero,append(priv,uint32ToByte(i)...)...))
+        mac.Write(append(priv,uint32ToByte(i)...))
     } else {
         mac.Write(append(pub,uint32ToByte(i)...))
     }

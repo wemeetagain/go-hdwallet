@@ -1,10 +1,7 @@
-Go HD Wallet tools (WIP -- DOES NOT WORK RIGHT NOW!!)
+Go HD Wallet tools
 ------------------
 
-BIP 32 wallet tools
  - BIP32 - https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
-
- - sort of based off - https://github.com/vbuterin/pybitcointools/blob/master/pybitcointools/deterministic.py
 
 ###Sample Use
 

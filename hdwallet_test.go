@@ -36,14 +36,6 @@ var (
     m_0_2147483647p_1_2147483646p_2_prv2 string = "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j"
     )
 
-func TestCKDPub(t *testing.T) {
-    testCkd(t,m_pub2,m_0_pub2,0)
-}
-
-func TestCKDPrv(t *testing.T) {
-    testCkd(t,m_prv2,m_0_prv2,0)
-}
-
 func testCkd(t *testing.T, key, ref_key string, i uint32) {
     child_key := Bip32_ckd(key, i)
     if child_key != ref_key {
@@ -70,24 +62,74 @@ func testPrivtopub(t *testing.T, prv, ref_pub string) {
 
 func TestVector1(t *testing.T) {
     seed, _ := hex.DecodeString(masterhex1)
+    t.Logf("master key")
     testMasterKey(t, seed, m_prv1)
+    t.Logf("master key -> pub")
     testPrivtopub(t ,m_prv1, m_pub1)
     var i uint32
     i = 0x80000000
     t.Logf("first child")
     testCkd(t,m_prv1,m_0p_prv1,i)
+    t.Logf("first child -> pub")
+    testPrivtopub(t,m_0p_prv1,m_0p_pub1)
     t.Logf("second child")
     testCkd(t,m_0p_prv1,m_0p_1_prv1,1)
+    t.Logf("second child -> pub")
+    testPrivtopub(t,m_0p_1_prv1,m_0p_1_pub1)
     t.Logf("third child")
     i = 0x80000002
     testCkd(t,m_0p_1_prv1,m_0p_1_2p_prv1,i)
+    t.Logf("third child -> pub")
+    testPrivtopub(t,m_0p_1_2p_prv1,m_0p_1_2p_pub1)
     t.Logf("fourth child")
     testCkd(t,m_0p_1_2p_prv1,m_0p_1_2p_2_prv1,2)
+    t.Logf("fourth child -> pub")
+    testPrivtopub(t,m_0p_1_2p_2_prv1,m_0p_1_2p_2_pub1)
     t.Logf("fifth child")
-    i = 1000000000 % 88888888
+    i = 1000000000 % 0x80000000
     testCkd(t,m_0p_1_2p_2_prv1,m_0p_1_2p_2_1000000000_prv1,i)
-    
-    //m_0p_1_2p_2_1000000000_prv1
+    t.Logf("fifth child -> pub")
+    testPrivtopub(t,m_0p_1_2p_2_1000000000_prv1,m_0p_1_2p_2_1000000000_pub1)
+}
+
+
+func TestVector2(t *testing.T) {
+    seed, _ := hex.DecodeString(masterhex2)
+    t.Logf("master key")
+    testMasterKey(t, seed, m_prv2)
+    t.Logf("master key -> pub")
+    testPrivtopub(t ,m_prv2, m_pub2)
+    var i uint32
+    t.Logf("first child")
+    testCkd(t,m_prv2,m_0_prv2,0)
+    t.Logf("first child -> pub")
+    testPrivtopub(t,m_0_prv2,m_0_pub2)
+    i = 2147483647 + 0x80000000
+    t.Logf("second child")
+    testCkd(t,m_0_prv2,m_0_2147483647p_prv2,i)
+    t.Logf("second child -> pub")
+    testPrivtopub(t,m_0_2147483647p_prv2,m_0_2147483647p_pub2)
+    t.Logf("third child")
+    testCkd(t,m_0_2147483647p_prv2,m_0_2147483647p_1_prv2,1)
+    t.Logf("third child -> pub")
+    testPrivtopub(t,m_0_2147483647p_1_prv2,m_0_2147483647p_1_pub2)
+    i = 2147483646 + 0x80000000
+    t.Logf("fourth child")
+    testCkd(t,m_0_2147483647p_1_prv2,m_0_2147483647p_1_2147483646p_prv2,i)
+    t.Logf("fourth child -> pub")
+    testPrivtopub(t,m_0_2147483647p_1_2147483646p_prv2,m_0_2147483647p_1_2147483646p_pub2)
+    t.Logf("fifth child")
+    testCkd(t,m_0_2147483647p_1_2147483646p_prv2,m_0_2147483647p_1_2147483646p_2_prv2,2)
+    t.Logf("fifth child -> pub")
+    testPrivtopub(t,m_0_2147483647p_1_2147483646p_2_prv2,m_0_2147483647p_1_2147483646p_2_pub2)
+}
+
+func TestCKDPub(t *testing.T) {
+    testCkd(t,m_pub2,m_0_pub2,0)
+}
+
+func TestCKDPrv(t *testing.T) {
+    testCkd(t,m_prv2,m_0_prv2,0)
 }
 
 func TestSerialize(t *testing.T) {
