@@ -1,6 +1,7 @@
 package hdwalletutil
 
 import (
+    "crypto/elliptic"
     "crypto/sha256"
     "code.google.com/p/go.crypto/ripemd160"
     "encoding/binary"
@@ -9,25 +10,7 @@ import (
     "math/big"
     )
 
-//exponentiation by squaring
-//http://simple.wikipedia.org/wiki/Exponentiation_by_squaring
-func pow(x, n int) int {
-    if n == 1 {
-        return x
-    } else if n % 2 == 0 {
-        return pow(x*x,n/2)
-    } else {
-        return x * pow(x*x,(n-1)/2)
-    }
-}
-
-func byte_append(a ...[]byte) []byte {
-    var b []byte
-    for _, i := range a {
-        b = append(b,i...)
-    }
-    return b
-}
+var curve elliptic.Curve = btcutil.Secp256k1()
 
 func hash160(data []byte) []byte {
     sha := sha256.New()
@@ -46,7 +29,6 @@ func dbl_sha256(data []byte) []byte {
 }
 
 func privtopub(key []byte) []byte {
-    curve := btcutil.Secp256k1()
     return compress(curve.ScalarBaseMult(key))
 }
 
@@ -62,7 +44,6 @@ func compress(x, y *big.Int) []byte {
 
 //2.3.4 of SEC1 - http://www.secg.org/index.php?action=secg,docs_secg
 func expand(key []byte) (*big.Int, *big.Int) {
-    curve := btcutil.Secp256k1().(*btcutil.KoblitzCurve)
     params := curve.Params()
     exp := big.NewInt(1)
     exp.Add(params.P,exp)
@@ -85,14 +66,13 @@ func add_privkeys(k1, k2 []byte) []byte {
     i1 := big.NewInt(0).SetBytes(k1)
     i2 := big.NewInt(0).SetBytes(k2)
     i1.Add(i1,i2)
-    i1.Mod(i1,btcutil.Secp256k1().(*btcutil.KoblitzCurve).N)
+    i1.Mod(i1,curve.Params().N)
     k := i1.Bytes()
     zero,_ := hex.DecodeString("00")
     return append(zero,k...)
 }
 
 func add_pubkeys(k1, k2 []byte) []byte {
-    curve := btcutil.Secp256k1().(*btcutil.KoblitzCurve)
     x1,y1 := expand(k1)
     x2,y2 := expand(k2)
     return compress(curve.Add(x1,y1,x2,y2))

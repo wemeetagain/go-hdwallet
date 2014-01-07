@@ -55,7 +55,7 @@ func raw_bip32_ckd(w HDWallet, i uint32) HDWallet {
     }
 
     mac := hmac.New(sha512.New, w.chaincode)
-    if i >= uint32(pow(2,31)) {
+    if i >= uint32(0x80000000) {
         if bytes.Compare(w.vbytes, PUBLIC) == 0 {
             panic("Can't do private derivation on public key!")
         }
