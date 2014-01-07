@@ -7,7 +7,7 @@ Go HD Wallet tools
 
         $ go get github.com/WeMeetAgain/gohdwalletutil
 
-###Sample Use
+###Example
 
         package main
         
@@ -30,8 +30,11 @@ Go HD Wallet tools
             childprv := hdwalletutil.Bip32_ckd(masterprv,0)
             childpub := hdwalletutil.Bip32_ckd(masterpub,0)
             
-            fmt.Println(childprv)
-            fmt.Println(childpub)
+            // Create bitcoin address from public key
+            address := hdwalletutil.Bip32_pubtoaddress(childpub)
+            
+            _ = childprv
+            fmt.Println(address)
         }
 
 ###Dependencies
