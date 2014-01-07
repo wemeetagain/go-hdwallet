@@ -140,3 +140,25 @@ func TestSerialize(t *testing.T) {
         t.Errorf("public key not de/reserializing properly")
     }
 }
+
+// benchmarks
+
+func BenchmarkCKDPub(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        Bip32_ckd(m_pub2,0)
+    }
+}
+
+func BenchmarkCKDPrv(b *testing.B) {
+    var a uint32
+    a = 0x80000000
+    for i := 0; i < b.N; i++ {
+        Bip32_ckd(m_prv1,a)
+    }
+}
+
+func BenchmarkPrivtopub(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        Bip32_privtopub(m_prv2)
+    }
+}
