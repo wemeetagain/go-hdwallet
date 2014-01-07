@@ -116,6 +116,16 @@ func Bip32_extract_key(data string) []byte {
     return w.key
 }
 
+func Bip32_pubtoaddress(data string) string {
+    x, y := expand(Bip32_extract_key(data))
+    four,_ := hex.DecodeString("04")
+    padded_key := append(four,append(x.Bytes(),y.Bytes()...)...)
+    zero,_ := hex.DecodeString("00")
+    addr_1 := append(zero,hash160(padded_key)...)
+    chksum := dbl_sha256(addr_1)
+    return btcutil.Base58Encode(append(addr_1,chksum[:4]...))
+}
+    
 func Gen_seed(length int) ([]byte, error) {
     b := make([]byte, length)
     if length < 128 {

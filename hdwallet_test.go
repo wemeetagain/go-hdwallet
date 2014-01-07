@@ -141,6 +141,21 @@ func TestSerialize(t *testing.T) {
     }
 }
 
+// Used this site to create test http://gobittest.appspot.com/Address
+// Public key: 04CBCAA9C98C877A26977D00825C956A238E8DDDFBD322CCE4F74B0B5BD6ACE4A77BD3305D363C26F82C1E41C667E4B3561C06C60A2104D2B548E6DD059056AA51
+// Expected address: 1AEg9dFEw29kMgaN4BNHALu7AzX5XUfzSU
+func TestPubtoaddress(t *testing.T) {
+    addr := Bip32_pubtoaddress(m_pub2)
+    expected_addr := "1AEg9dFEw29kMgaN4BNHALu7AzX5XUfzSU"
+    if addr != expected_addr {
+        t.Errorf("\n%s\nshould be\n%s",addr,expected_addr)
+        x, y := expand(Bip32_extract_key(m_pub2))
+        four,_ := hex.DecodeString("04")
+        padded_key := append(four,append(x.Bytes(),y.Bytes()...)...)
+        t.Logf("Padded key: %X",padded_key)
+    }
+}
+
 // benchmarks
 
 func BenchmarkCKDPub(b *testing.B) {
@@ -160,5 +175,11 @@ func BenchmarkCKDPrv(b *testing.B) {
 func BenchmarkPrivtopub(b *testing.B) {
     for i := 0; i < b.N; i++ {
         Bip32_privtopub(m_prv2)
+    }
+}
+
+func BenchmarkPubtoaddress(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        Bip32_pubtoaddress(m_pub2)
     }
 }
