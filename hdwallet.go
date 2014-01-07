@@ -149,3 +149,22 @@ func Bip32_master_key(seed []byte) string {
     w := HDWallet{PRIVATE,uint16(depth),fingerprint,i,chain_code,append(zero,secret...)}
     return bip32_serialize(w)
 }
+
+func Bip32_is_valid_key(key string) bool {
+    dbin := btcutil.Base58Decode(key)
+    if len(dbin) < 78 || len(dbin) > 82 {
+        return false
+    }
+    // check for correct public or private vbytes
+    public,_ := hex.DecodeString("0488B21E")
+    private,_ :=  hex.DecodeString("0488ADE4")
+    if bytes.Compare(dbin[:4],public) != 0 && bytes.Compare(dbin[:4],private) != 0 {
+        return false
+    }
+    // if public, check x coord is on curve
+    x, y := expand(dbin[45:78])
+    if bytes.Compare(dbin[:4],public) == 0 && !onCurve(x,y) {
+        return false
+    }
+    return true
+}

@@ -32,6 +32,10 @@ func privtopub(key []byte) []byte {
     return compress(curve.ScalarBaseMult(key))
 }
 
+func onCurve(x, y *big.Int) bool {
+    return curve.IsOnCurve(x,y)
+}
+
 func compress(x, y *big.Int) []byte {
     two := big.NewInt(2)
     rem := two.Mod(y,two).Uint64()

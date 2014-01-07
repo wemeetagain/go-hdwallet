@@ -156,6 +156,14 @@ func TestPubtoaddress(t *testing.T) {
     }
 }
 
+func TestIsvalidkey(t *testing.T) {
+    if ok := Bip32_is_valid_key(m_pub2); !ok {
+        t.Errorf("%t should have been true",ok)
+    }
+    if ok := Bip32_is_valid_key(m_prv2); !ok {
+        t.Errorf("%t should have been true",ok)
+    }
+}
 // benchmarks
 
 func BenchmarkCKDPub(b *testing.B) {
@@ -181,5 +189,11 @@ func BenchmarkPrivtopub(b *testing.B) {
 func BenchmarkPubtoaddress(b *testing.B) {
     for i := 0; i < b.N; i++ {
         Bip32_pubtoaddress(m_pub2)
+    }
+}
+
+func BenchmarkIsvalidkey(b *testing.B) {
+    for i := 0; i < b.N; i++ {
+        Bip32_is_valid_key(m_pub2)
     }
 }
