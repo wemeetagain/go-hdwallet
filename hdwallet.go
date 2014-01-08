@@ -23,7 +23,7 @@ func init() {
     Private,_ = hex.DecodeString("0488ADE4")
 }
 
-type HDWallet struct {
+type hdwallet struct {
     vbytes []byte //4 bytes
     depth uint16 //1 byte
     fingerprint []byte //4 bytes
@@ -32,7 +32,7 @@ type HDWallet struct {
     key []byte //33 bytes
 }
 
-func rawBip32Ckd(w HDWallet, i uint32) HDWallet {
+func rawBip32Ckd(w hdwallet, i uint32) hdwallet {
     var fingerprint, I , newkey []byte
     switch {
     case bytes.Compare(w.vbytes, Private) == 0:
@@ -57,10 +57,10 @@ func rawBip32Ckd(w HDWallet, i uint32) HDWallet {
         newkey = addPubKeys(privToPub(I[:32]), w.key)
         fingerprint = hash160(w.key)[:4]
     }
-    return HDWallet{w.vbytes, w.depth + 1, fingerprint, uint32ToByte(i), I[32:], newkey}
+    return hdwallet{w.vbytes, w.depth + 1, fingerprint, uint32ToByte(i), I[32:], newkey}
 }
 
-func bip32Serialize(w HDWallet) string {
+func bip32Serialize(w hdwallet) string {
     depth := uint16ToByte(uint16(w.depth % 256))
     //bindata = vbytes||depth||fingerprint||i||chaincode||key
     bindata := append(w.vbytes,append(depth,append(w.fingerprint,append(w.i,append(w.chaincode,w.key...)...)...)...)...)
@@ -68,7 +68,7 @@ func bip32Serialize(w HDWallet) string {
     return btcutil.Base58Encode(append(bindata,chksum...))
 }
 
-func bip32Deserialize(data string) HDWallet {
+func bip32Deserialize(data string) hdwallet {
     dbin := btcutil.Base58Decode(data)
     if bytes.Compare(dblSha256(dbin[:(len(dbin)-4)])[:4], dbin[(len(dbin)-4):]) != 0 {
         panic("Invalid checksum")
@@ -79,28 +79,28 @@ func bip32Deserialize(data string) HDWallet {
     i := dbin[9:13]
     chaincode := dbin[13:45]
     key := dbin[45:78]
-    return HDWallet{vbytes, depth, fingerprint, i, chaincode, key}
+    return hdwallet{vbytes, depth, fingerprint, i, chaincode, key}
 }
 
-func rawBip32PrivToPub(w HDWallet) HDWallet {
-    return HDWallet{Public, w.depth, w.fingerprint, w.i, w.chaincode, privToPub(w.key)}
+func rawBip32PrivToPub(w hdwallet) hdwallet {
+    return hdwallet{Public, w.depth, w.fingerprint, w.i, w.chaincode, privToPub(w.key)}
 }
 
-func Bip32PrivToPub(data string) string {
+func PrivToPub(data string) string {
     return bip32Serialize(rawBip32PrivToPub(bip32Deserialize(data)))
 }
 
-func Bip32Ckd(data string ,i uint32) string {
+func Child(data string ,i uint32) string {
     return bip32Serialize(rawBip32Ckd(bip32Deserialize(data),i))
 }
 
-func Bip32ExtractKey(data string) []byte {
+func ExtractKey(data string) []byte {
     w := bip32Deserialize(data)
     return w.key
 }
 
-func Bip32PubToAddress(data string) string {
-    x, y := expand(Bip32ExtractKey(data))
+func PubToAddress(data string) string {
+    x, y := expand(ExtractKey(data))
     four,_ := hex.DecodeString("04")
     padded_key := append(four,append(x.Bytes(),y.Bytes()...)...)
     zero,_ := hex.DecodeString("00")
@@ -118,7 +118,7 @@ func GenSeed(length int) ([]byte, error) {
     return b, err
 }
 
-func Bip32MasterKey(seed []byte) string {
+func MasterKey(seed []byte) string {
     key := []byte("Bitcoin seed")
     mac := hmac.New(sha512.New, key)
     mac.Write(seed)
@@ -129,11 +129,11 @@ func Bip32MasterKey(seed []byte) string {
     i := make([]byte, 4)
     fingerprint := make([]byte, 4)
     zero := make([]byte,1)
-    w := HDWallet{Private,uint16(depth),fingerprint,i,chain_code,append(zero,secret...)}
+    w := hdwallet{Private,uint16(depth),fingerprint,i,chain_code,append(zero,secret...)}
     return bip32Serialize(w)
 }
 
-func Bip32IsValidKey(key string) bool {
+func IsValidKey(key string) bool {
     dbin := btcutil.Base58Decode(key)
     if len(dbin) < 78 || len(dbin) > 82 {
         return false

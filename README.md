@@ -21,17 +21,17 @@ Go HD Wallet tools
             seed,_ := hdwalletutil.GenSeed(256)
             
             // Create a master private key
-            masterprv := hdwalletutil.Bip32MasterKey(seed)
+            masterprv := hdwalletutil.MasterKey(seed)
             
             // Convert a private key to public key
-            masterpub := hdwalletutil.Bip32PrivToPub(masterprv)
+            masterpub := hdwalletutil.PrivToPub(masterprv)
             
             // Generate new child key based on private or public key
-            childprv := hdwalletutil.Bip32Ckd(masterprv,0)
-            childpub := hdwalletutil.Bip32Ckd(masterpub,0)
+            childprv := hdwalletutil.Child(masterprv,0)
+            childpub := hdwalletutil.Child(masterpub,0)
             
             // Create bitcoin address from public key
-            address := hdwalletutil.Bip32PubToAddress(childpub)
+            address := hdwalletutil.PubToAddress(childpub)
             
             _ = childprv
             fmt.Println(address)
