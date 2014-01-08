@@ -20,7 +20,7 @@ func hash160(data []byte) []byte {
     return ripe.Sum(nil)
 }
 
-func dbl_sha256(data []byte) []byte {
+func dblSha256(data []byte) []byte {
     sha1 := sha256.New()
     sha2 := sha256.New()
     sha1.Write(data)
@@ -28,7 +28,7 @@ func dbl_sha256(data []byte) []byte {
     return sha2.Sum(nil)
 }
 
-func privtopub(key []byte) []byte {
+func privToPub(key []byte) []byte {
     return compress(curve.ScalarBaseMult(key))
 }
 
@@ -66,7 +66,7 @@ func expand(key []byte) (*big.Int, *big.Int) {
     return x,y
 }
 
-func add_privkeys(k1, k2 []byte) []byte {
+func addPrivKeys(k1, k2 []byte) []byte {
     i1 := big.NewInt(0).SetBytes(k1)
     i2 := big.NewInt(0).SetBytes(k2)
     i1.Add(i1,i2)
@@ -76,7 +76,7 @@ func add_privkeys(k1, k2 []byte) []byte {
     return append(zero,k...)
 }
 
-func add_pubkeys(k1, k2 []byte) []byte {
+func addPubKeys(k1, k2 []byte) []byte {
     x1,y1 := expand(k1)
     x2,y2 := expand(k2)
     return compress(curve.Add(x1,y1,x2,y2))

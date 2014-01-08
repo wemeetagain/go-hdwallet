@@ -37,24 +37,24 @@ var (
     )
 
 func testCkd(t *testing.T, key, ref_key string, i uint32) {
-    child_key := Bip32_ckd(key, i)
+    child_key := Bip32Ckd(key, i)
     if child_key != ref_key {
         t.Errorf("\n%s\nsupposed to be\n%s",child_key,ref_key)
-        w1 := bip32_deserialize(child_key)
-        w2 := bip32_deserialize(ref_key)
+        w1 := bip32Deserialize(child_key)
+        w2 := bip32Deserialize(ref_key)
         t.Errorf("\n%x\n%x",w1.chaincode,w2.chaincode)
     }
 }
 
 func testMasterKey(t *testing.T, seed []byte, ref_key string) {
-    masterprv := Bip32_master_key(seed)
+    masterprv := Bip32MasterKey(seed)
     if masterprv != ref_key {
         t.Errorf("\n%s\nsupposed to be\n%s",masterprv,ref_key)
     }
 }
 
 func testPrivtopub(t *testing.T, prv, ref_pub string) {
-    pub := Bip32_privtopub(prv)
+    pub := Bip32PrivToPub(prv)
     if pub != ref_pub {
         t.Errorf("\n%s\nsupposed to be\n%s",pub,ref_pub)
     }
@@ -133,10 +133,10 @@ func TestCKDPrv(t *testing.T) {
 }
 
 func TestSerialize(t *testing.T) {
-    if m_prv2 != bip32_serialize(bip32_deserialize(m_prv2)) {
+    if m_prv2 != bip32Serialize(bip32Deserialize(m_prv2)) {
         t.Errorf("private key not de/reserializing properly")
     }
-    if m_pub2 != bip32_serialize(bip32_deserialize(m_pub2)) {
+    if m_pub2 != bip32Serialize(bip32Deserialize(m_pub2)) {
         t.Errorf("public key not de/reserializing properly")
     }
 }
@@ -145,11 +145,11 @@ func TestSerialize(t *testing.T) {
 // Public key: 04CBCAA9C98C877A26977D00825C956A238E8DDDFBD322CCE4F74B0B5BD6ACE4A77BD3305D363C26F82C1E41C667E4B3561C06C60A2104D2B548E6DD059056AA51
 // Expected address: 1AEg9dFEw29kMgaN4BNHALu7AzX5XUfzSU
 func TestPubtoaddress(t *testing.T) {
-    addr := Bip32_pubtoaddress(m_pub2)
+    addr := Bip32PubToAddress(m_pub2)
     expected_addr := "1AEg9dFEw29kMgaN4BNHALu7AzX5XUfzSU"
     if addr != expected_addr {
         t.Errorf("\n%s\nshould be\n%s",addr,expected_addr)
-        x, y := expand(Bip32_extract_key(m_pub2))
+        x, y := expand(Bip32ExtractKey(m_pub2))
         four,_ := hex.DecodeString("04")
         padded_key := append(four,append(x.Bytes(),y.Bytes()...)...)
         t.Logf("Padded key: %X",padded_key)
@@ -157,10 +157,10 @@ func TestPubtoaddress(t *testing.T) {
 }
 
 func TestIsvalidkey(t *testing.T) {
-    if ok := Bip32_is_valid_key(m_pub2); !ok {
+    if ok := Bip32IsValidKey(m_pub2); !ok {
         t.Errorf("%t should have been true",ok)
     }
-    if ok := Bip32_is_valid_key(m_prv2); !ok {
+    if ok := Bip32IsValidKey(m_prv2); !ok {
         t.Errorf("%t should have been true",ok)
     }
 }
@@ -168,7 +168,7 @@ func TestIsvalidkey(t *testing.T) {
 
 func BenchmarkCKDPub(b *testing.B) {
     for i := 0; i < b.N; i++ {
-        Bip32_ckd(m_pub2,0)
+        Bip32Ckd(m_pub2,0)
     }
 }
 
@@ -176,24 +176,24 @@ func BenchmarkCKDPrv(b *testing.B) {
     var a uint32
     a = 0x80000000
     for i := 0; i < b.N; i++ {
-        Bip32_ckd(m_prv1,a)
+        Bip32Ckd(m_prv1,a)
     }
 }
 
 func BenchmarkPrivtopub(b *testing.B) {
     for i := 0; i < b.N; i++ {
-        Bip32_privtopub(m_prv2)
+        Bip32PrivToPub(m_prv2)
     }
 }
 
 func BenchmarkPubtoaddress(b *testing.B) {
     for i := 0; i < b.N; i++ {
-        Bip32_pubtoaddress(m_pub2)
+        Bip32PubToAddress(m_pub2)
     }
 }
 
 func BenchmarkIsvalidkey(b *testing.B) {
     for i := 0; i < b.N; i++ {
-        Bip32_is_valid_key(m_pub2)
+        Bip32IsValidKey(m_pub2)
     }
 }
