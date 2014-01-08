@@ -23,52 +23,56 @@ func init() {
     Private,_ = hex.DecodeString("0488ADE4")
 }
 
-type hdwallet struct {
-    vbytes []byte //4 bytes
-    depth uint16 //1 byte
-    fingerprint []byte //4 bytes
-    i []byte //4 bytes
-    chaincode []byte //32 bytes
-    key []byte //33 bytes
+type HDWallet struct {
+    Vbytes []byte //4 bytes
+    Depth uint16 //1 byte
+    Fingerprint []byte //4 bytes
+    I []byte //4 bytes
+    Chaincode []byte //32 bytes
+    Key []byte //33 bytes
 }
 
-func rawBip32Ckd(w hdwallet, i uint32) hdwallet {
+func (w *HDWallet) Child(i uint32) *HDWallet {
     var fingerprint, I , newkey []byte
     switch {
-    case bytes.Compare(w.vbytes, Private) == 0:
-        pub := privToPub(w.key)
-        mac := hmac.New(sha512.New, w.chaincode)
-        if i >= uint32(0x80000000) { 
-            mac.Write(append(w.key,uint32ToByte(i)...))
-        } else { 
+    case bytes.Compare(w.Vbytes, Private) == 0:
+        pub := privToPub(w.Key)
+        mac := hmac.New(sha512.New, w.Chaincode)
+        if i >= uint32(0x80000000) {
+            mac.Write(append(w.Key,uint32ToByte(i)...))
+        } else {
             mac.Write(append(pub,uint32ToByte(i)...))
         }
         I = mac.Sum(nil)
-        newkey = addPrivKeys(I[:32], w.key)
-        fingerprint = hash160(privToPub(w.key))[:4]
+        newkey = addPrivKeys(I[:32], w.Key)
+        fingerprint = hash160(privToPub(w.Key))[:4]
 
-    case bytes.Compare(w.vbytes, Public) == 0:
-        mac := hmac.New(sha512.New, w.chaincode)
+    case bytes.Compare(w.Vbytes, Public) == 0:
+        mac := hmac.New(sha512.New, w.Chaincode)
         if i >= uint32(0x80000000) {
             panic("Can't do Private derivation on Public key!")
         }
-        mac.Write(append(w.key,uint32ToByte(i)...))
+        mac.Write(append(w.Key,uint32ToByte(i)...))
         I = mac.Sum(nil)
-        newkey = addPubKeys(privToPub(I[:32]), w.key)
-        fingerprint = hash160(w.key)[:4]
+        newkey = addPubKeys(privToPub(I[:32]), w.Key)
+        fingerprint = hash160(w.Key)[:4]
     }
-    return hdwallet{w.vbytes, w.depth + 1, fingerprint, uint32ToByte(i), I[32:], newkey}
+    return &HDWallet{w.Vbytes, w.Depth + 1, fingerprint, uint32ToByte(i), I[32:], newkey}
 }
 
-func bip32Serialize(w hdwallet) string {
-    depth := uint16ToByte(uint16(w.depth % 256))
+func (w *HDWallet) Serialize() []byte  {
+    depth := uint16ToByte(uint16(w.Depth % 256))
     //bindata = vbytes||depth||fingerprint||i||chaincode||key
-    bindata := append(w.vbytes,append(depth,append(w.fingerprint,append(w.i,append(w.chaincode,w.key...)...)...)...)...)
+    bindata := append(w.Vbytes,append(depth,append(w.Fingerprint,append(w.I,append(w.Chaincode,w.Key...)...)...)...)...)
     chksum := dblSha256(bindata)[:4]
-    return btcutil.Base58Encode(append(bindata,chksum...))
+    return append(bindata,chksum...)
 }
 
-func bip32Deserialize(data string) hdwallet {
+func (w *HDWallet) String() string  {
+    return btcutil.Base58Encode(w.Serialize())
+}
+
+func StringWallet(data string) *HDWallet {
     dbin := btcutil.Base58Decode(data)
     if bytes.Compare(dblSha256(dbin[:(len(dbin)-4)])[:4], dbin[(len(dbin)-4):]) != 0 {
         panic("Invalid checksum")
@@ -79,28 +83,23 @@ func bip32Deserialize(data string) hdwallet {
     i := dbin[9:13]
     chaincode := dbin[13:45]
     key := dbin[45:78]
-    return hdwallet{vbytes, depth, fingerprint, i, chaincode, key}
+    return &HDWallet{vbytes, depth, fingerprint, i, chaincode, key}
 }
 
-func rawBip32PrivToPub(w hdwallet) hdwallet {
-    return hdwallet{Public, w.depth, w.fingerprint, w.i, w.chaincode, privToPub(w.key)}
+func (w *HDWallet) PrivToPub() *HDWallet {
+    return &HDWallet{Public, w.Depth, w.Fingerprint, w.I, w.Chaincode, privToPub(w.Key)}
 }
 
-func PrivToPub(data string) string {
-    return bip32Serialize(rawBip32PrivToPub(bip32Deserialize(data)))
+func StringChild(data string ,i uint32) string {
+    return StringWallet(data).Child(i).String()
 }
 
-func Child(data string ,i uint32) string {
-    return bip32Serialize(rawBip32Ckd(bip32Deserialize(data),i))
+func StringToAddress(data string) string {
+    return StringWallet(data).ToAddress()
 }
 
-func ExtractKey(data string) []byte {
-    w := bip32Deserialize(data)
-    return w.key
-}
-
-func PubToAddress(data string) string {
-    x, y := expand(ExtractKey(data))
+func (w *HDWallet) ToAddress() string {
+    x, y := expand(w.Key)
     four,_ := hex.DecodeString("04")
     padded_key := append(four,append(x.Bytes(),y.Bytes()...)...)
     zero,_ := hex.DecodeString("00")
@@ -118,7 +117,7 @@ func GenSeed(length int) ([]byte, error) {
     return b, err
 }
 
-func MasterKey(seed []byte) string {
+func MasterKey(seed []byte) *HDWallet {
     key := []byte("Bitcoin seed")
     mac := hmac.New(sha512.New, key)
     mac.Write(seed)
@@ -129,8 +128,7 @@ func MasterKey(seed []byte) string {
     i := make([]byte, 4)
     fingerprint := make([]byte, 4)
     zero := make([]byte,1)
-    w := hdwallet{Private,uint16(depth),fingerprint,i,chain_code,append(zero,secret...)}
-    return bip32Serialize(w)
+    return &HDWallet{Private,uint16(depth),fingerprint,i,chain_code,append(zero,secret...)}
 }
 
 func IsValidKey(key string) bool {

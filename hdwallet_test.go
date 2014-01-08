@@ -37,21 +37,21 @@ var (
     )
 
 func testCkd(t *testing.T, key, ref_key string, i uint32) {
-    child_key := Child(key, i)
+    child_key := StringChild(key, i)
     if child_key != ref_key {
         t.Errorf("\n%s\nsupposed to be\n%s",child_key,ref_key)
     }
 }
 
 func testMasterKey(t *testing.T, seed []byte, ref_key string) {
-    masterprv := MasterKey(seed)
+    masterprv := MasterKey(seed).String()
     if masterprv != ref_key {
         t.Errorf("\n%s\nsupposed to be\n%s",masterprv,ref_key)
     }
 }
 
 func testPrivtopub(t *testing.T, prv, ref_pub string) {
-    pub := PrivToPub(prv)
+    pub := StringWallet(prv).PrivToPub().String()
     if pub != ref_pub {
         t.Errorf("\n%s\nsupposed to be\n%s",pub,ref_pub)
     }
@@ -130,10 +130,10 @@ func TestCKDPrv(t *testing.T) {
 }
 
 func TestSerialize(t *testing.T) {
-    if m_prv2 != bip32Serialize(bip32Deserialize(m_prv2)) {
+    if m_prv2 != StringWallet(m_prv2).String() {
         t.Errorf("private key not de/reserializing properly")
     }
-    if m_pub2 != bip32Serialize(bip32Deserialize(m_pub2)) {
+    if m_pub2 != StringWallet(m_pub2).String() {
         t.Errorf("public key not de/reserializing properly")
     }
 }
@@ -142,11 +142,11 @@ func TestSerialize(t *testing.T) {
 // Public key: 04CBCAA9C98C877A26977D00825C956A238E8DDDFBD322CCE4F74B0B5BD6ACE4A77BD3305D363C26F82C1E41C667E4B3561C06C60A2104D2B548E6DD059056AA51
 // Expected address: 1AEg9dFEw29kMgaN4BNHALu7AzX5XUfzSU
 func TestPubtoaddress(t *testing.T) {
-    addr := PubToAddress(m_pub2)
+    addr := StringToAddress(m_pub2)
     expected_addr := "1AEg9dFEw29kMgaN4BNHALu7AzX5XUfzSU"
     if addr != expected_addr {
         t.Errorf("\n%s\nshould be\n%s",addr,expected_addr)
-        x, y := expand(ExtractKey(m_pub2))
+        x, y := expand(StringWallet(m_pub2).Key)
         four,_ := hex.DecodeString("04")
         padded_key := append(four,append(x.Bytes(),y.Bytes()...)...)
         t.Logf("Padded key: %X",padded_key)
@@ -165,7 +165,7 @@ func TestIsvalidkey(t *testing.T) {
 
 func BenchmarkCKDPub(b *testing.B) {
     for i := 0; i < b.N; i++ {
-        Child(m_pub2,0)
+        StringChild(m_pub2,0)
     }
 }
 
@@ -173,19 +173,19 @@ func BenchmarkCKDPrv(b *testing.B) {
     var a uint32
     a = 0x80000000
     for i := 0; i < b.N; i++ {
-        Child(m_prv1,a)
+        StringChild(m_prv1,a)
     }
 }
 
 func BenchmarkPrivtopub(b *testing.B) {
     for i := 0; i < b.N; i++ {
-        PrivToPub(m_prv2)
+        StringWallet(m_prv2).PrivToPub()
     }
 }
 
 func BenchmarkPubtoaddress(b *testing.B) {
     for i := 0; i < b.N; i++ {
-        PubToAddress(m_pub2)
+        StringToAddress(m_pub2)
     }
 }
 
