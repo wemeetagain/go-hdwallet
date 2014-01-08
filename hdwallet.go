@@ -14,26 +14,13 @@ import (
 
 var (
     //mainnet
-    //0488B21E public
-    pubstr = "0488B21E"
-    PUBLIC []byte
-    //0488ADE4 private
-    prvstr = "0488ADE4"
-    PRIVATE []byte
-    //testnet
-    //043587CF public
-    //testpubstr = "043587CF"
-    //TESTPUBLIC []byte
-    //4358394 private
-    //testprvstr = "04358394"
-    //TESTPRIVATE []byte
+    Public []byte
+    Private []byte
     )
 
 func init() {
-    PUBLIC,_ = hex.DecodeString(pubstr)
-    PRIVATE,_ = hex.DecodeString(prvstr)
-    //TESTPUBLIC,_ := hex.DecodeString(testpubstr)
-    //TESTPRIVATE,_ := hex.DecodeString(testprvstr)
+    Public,_ = hex.DecodeString("0488B21E")
+    Private,_ = hex.DecodeString("0488ADE4")
 }
 
 type HDWallet struct {
@@ -46,35 +33,31 @@ type HDWallet struct {
 }
 
 func rawBip32Ckd(w HDWallet, i uint32) HDWallet {
-    var priv, pub []byte
-    if bytes.Compare(w.vbytes, PRIVATE) == 0 {
-        priv = w.key
-        pub = privToPub(priv)
-    } else {
-        pub = w.key
-    }
-
-    mac := hmac.New(sha512.New, w.chaincode)
-    if i >= uint32(0x80000000) {
-        if bytes.Compare(w.vbytes, PUBLIC) == 0 {
-            panic("Can't do private derivation on public key!")
+    var fingerprint, I , newkey []byte
+    switch {
+    case bytes.Compare(w.vbytes, Private) == 0:
+        pub := privToPub(w.key)
+        mac := hmac.New(sha512.New, w.chaincode)
+        if i >= uint32(0x80000000) { 
+            mac.Write(append(w.key,uint32ToByte(i)...))
+        } else { 
+            mac.Write(append(pub,uint32ToByte(i)...))
         }
-        mac.Write(append(priv,uint32ToByte(i)...))
-    } else {
-        mac.Write(append(pub,uint32ToByte(i)...))
-    }
-    I := mac.Sum(nil)
-
-    var newkey, fingerprint []byte
-    if bytes.Compare(w.vbytes, PRIVATE) == 0 {
-        newkey = addPrivKeys(I[:32], priv)
+        I = mac.Sum(nil)
+        newkey = addPrivKeys(I[:32], w.key)
         fingerprint = hash160(privToPub(w.key))[:4]
-    }
-    if bytes.Compare(w.vbytes, PUBLIC) == 0 {
+
+    case bytes.Compare(w.vbytes, Public) == 0:
+        mac := hmac.New(sha512.New, w.chaincode)
+        if i >= uint32(0x80000000) {
+            panic("Can't do Private derivation on Public key!")
+        }
+        mac.Write(append(w.key,uint32ToByte(i)...))
+        I = mac.Sum(nil)
         newkey = addPubKeys(privToPub(I[:32]), w.key)
         fingerprint = hash160(w.key)[:4]
     }
-    return HDWallet{w.vbytes, w.depth +1, fingerprint, uint32ToByte(i), I[32:], newkey}
+    return HDWallet{w.vbytes, w.depth + 1, fingerprint, uint32ToByte(i), I[32:], newkey}
 }
 
 func bip32Serialize(w HDWallet) string {
@@ -100,7 +83,7 @@ func bip32Deserialize(data string) HDWallet {
 }
 
 func rawBip32PrivToPub(w HDWallet) HDWallet {
-    return HDWallet{PUBLIC, w.depth, w.fingerprint, w.i, w.chaincode, privToPub(w.key)}
+    return HDWallet{Public, w.depth, w.fingerprint, w.i, w.chaincode, privToPub(w.key)}
 }
 
 func Bip32PrivToPub(data string) string {
@@ -146,7 +129,7 @@ func Bip32MasterKey(seed []byte) string {
     i := make([]byte, 4)
     fingerprint := make([]byte, 4)
     zero := make([]byte,1)
-    w := HDWallet{PRIVATE,uint16(depth),fingerprint,i,chain_code,append(zero,secret...)}
+    w := HDWallet{Private,uint16(depth),fingerprint,i,chain_code,append(zero,secret...)}
     return bip32Serialize(w)
 }
 
@@ -155,16 +138,16 @@ func Bip32IsValidKey(key string) bool {
     if len(dbin) < 78 || len(dbin) > 82 {
         return false
     }
-    // check for correct public or private vbytes
-    public,_ := hex.DecodeString("0488B21E")
-    private,_ :=  hex.DecodeString("0488ADE4")
-    if bytes.Compare(dbin[:4],public) != 0 && bytes.Compare(dbin[:4],private) != 0 {
+    // check for correct Public or Private vbytes
+    if bytes.Compare(dbin[:4],Public) != 0 && bytes.Compare(dbin[:4],Private) != 0 {
         return false
     }
-    // if public, check x coord is on curve
+    // if Public, check x coord is on curve
     x, y := expand(dbin[45:78])
-    if bytes.Compare(dbin[:4],public) == 0 && !onCurve(x,y) {
-        return false
+    if bytes.Compare(dbin[:4],Private) != 0 {
+        if !onCurve(x,y) {
+            return false
+        }
     }
     return true
 }
