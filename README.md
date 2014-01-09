@@ -5,38 +5,37 @@ Go HD Wallet tools
 
 ###Get this library
 
-        $ go get github.com/WeMeetAgain/gohdwalletutil
+        $ go get github.com/WeMeetAgain/go-hdwallet
 
 ###Example
 
         package main
         
         import (
-            "fmt"
-            "github.com/WeMeetAgain/gohdwalletutil"
+            "github.com/WeMeetAgain/go-hdwallet"
             ) 
 
         func main() {
             // Generate a random 256 bit seed
-            seed,_ := hdwalletutil.GenSeed(256)
+            seed, err := hdwallet.GenSeed(256)
             
             // Create a master private key
-            masterprv := hdwalletutil.MasterKey(seed)
+            masterprv := hdwallet.MasterKey(seed)
             
             // Convert a private key to public key
-            masterpub := masterprv.PrivToPub()
+            masterpub := masterprv.Pub()
             
             // Generate new child key based on private or public key
-            childprv := masterprv.Child(0)
-            childpub := masterpub.Child(0)
+            childprv, err := masterprv.Child(0)
+            childpub, err := masterpub.Child(0)
             
             // Create bitcoin address from public key
-            address := childpub.ToAddress()
+            address := childpub.Address()
 
             // Convenience string -> string Child and ToAddress functions
-            wallet_string := childpub.String()
-            childstring = hdwalletutil.StringChild(wallet_string,0)
-            childaddress = hdwalletutil.StringToAddress(childstring)
+            walletstring := childpub.String()
+            childstring, err := hdwallet.StringChild(walletstring,0)
+            childaddress, err := hdwallet.StringAddress(childstring)
         }
 
 ###Dependencies

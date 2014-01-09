@@ -1,4 +1,4 @@
-package hdwalletutil
+package hdwallet
 
 import (
     "testing"
@@ -36,8 +36,11 @@ var (
     m_0_2147483647p_1_2147483646p_2_prv2 string = "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j"
     )
 
-func testCkd(t *testing.T, key, ref_key string, i uint32) {
-    child_key := StringChild(key, i)
+func testChild(t *testing.T, key, ref_key string, i uint32) {
+    child_key,err := StringChild(key, i)
+    if err != nil {
+        t.Errorf("%s should have been nil",err.Error())
+    }
     if child_key != ref_key {
         t.Errorf("\n%s\nsupposed to be\n%s",child_key,ref_key)
     }
@@ -50,8 +53,12 @@ func testMasterKey(t *testing.T, seed []byte, ref_key string) {
     }
 }
 
-func testPrivtopub(t *testing.T, prv, ref_pub string) {
-    pub := StringWallet(prv).PrivToPub().String()
+func testPub(t *testing.T, prv, ref_pub string) {
+    w, err := StringWallet(prv)
+    if err != nil {
+        t.Errorf("%s should have been nil",err.Error())
+    }
+    pub := w.Pub().String()
     if pub != ref_pub {
         t.Errorf("\n%s\nsupposed to be\n%s",pub,ref_pub)
     }
@@ -62,31 +69,31 @@ func TestVector1(t *testing.T) {
     t.Logf("master key")
     testMasterKey(t, seed, m_prv1)
     t.Logf("master key -> pub")
-    testPrivtopub(t ,m_prv1, m_pub1)
+    testPub(t ,m_prv1, m_pub1)
     var i uint32
     i = 0x80000000
     t.Logf("first child")
-    testCkd(t,m_prv1,m_0p_prv1,i)
+    testChild(t,m_prv1,m_0p_prv1,i)
     t.Logf("first child -> pub")
-    testPrivtopub(t,m_0p_prv1,m_0p_pub1)
+    testPub(t,m_0p_prv1,m_0p_pub1)
     t.Logf("second child")
-    testCkd(t,m_0p_prv1,m_0p_1_prv1,1)
+    testChild(t,m_0p_prv1,m_0p_1_prv1,1)
     t.Logf("second child -> pub")
-    testPrivtopub(t,m_0p_1_prv1,m_0p_1_pub1)
+    testPub(t,m_0p_1_prv1,m_0p_1_pub1)
     t.Logf("third child")
     i = 0x80000002
-    testCkd(t,m_0p_1_prv1,m_0p_1_2p_prv1,i)
+    testChild(t,m_0p_1_prv1,m_0p_1_2p_prv1,i)
     t.Logf("third child -> pub")
-    testPrivtopub(t,m_0p_1_2p_prv1,m_0p_1_2p_pub1)
+    testPub(t,m_0p_1_2p_prv1,m_0p_1_2p_pub1)
     t.Logf("fourth child")
-    testCkd(t,m_0p_1_2p_prv1,m_0p_1_2p_2_prv1,2)
+    testChild(t,m_0p_1_2p_prv1,m_0p_1_2p_2_prv1,2)
     t.Logf("fourth child -> pub")
-    testPrivtopub(t,m_0p_1_2p_2_prv1,m_0p_1_2p_2_pub1)
+    testPub(t,m_0p_1_2p_2_prv1,m_0p_1_2p_2_pub1)
     t.Logf("fifth child")
     i = 1000000000 % 0x80000000
-    testCkd(t,m_0p_1_2p_2_prv1,m_0p_1_2p_2_1000000000_prv1,i)
+    testChild(t,m_0p_1_2p_2_prv1,m_0p_1_2p_2_1000000000_prv1,i)
     t.Logf("fifth child -> pub")
-    testPrivtopub(t,m_0p_1_2p_2_1000000000_prv1,m_0p_1_2p_2_1000000000_pub1)
+    testPub(t,m_0p_1_2p_2_1000000000_prv1,m_0p_1_2p_2_1000000000_pub1)
 }
 
 
@@ -95,45 +102,53 @@ func TestVector2(t *testing.T) {
     t.Logf("master key")
     testMasterKey(t, seed, m_prv2)
     t.Logf("master key -> pub")
-    testPrivtopub(t ,m_prv2, m_pub2)
+    testPub(t ,m_prv2, m_pub2)
     var i uint32
     t.Logf("first child")
-    testCkd(t,m_prv2,m_0_prv2,0)
+    testChild(t,m_prv2,m_0_prv2,0)
     t.Logf("first child -> pub")
-    testPrivtopub(t,m_0_prv2,m_0_pub2)
+    testPub(t,m_0_prv2,m_0_pub2)
     i = 2147483647 + 0x80000000
     t.Logf("second child")
-    testCkd(t,m_0_prv2,m_0_2147483647p_prv2,i)
+    testChild(t,m_0_prv2,m_0_2147483647p_prv2,i)
     t.Logf("second child -> pub")
-    testPrivtopub(t,m_0_2147483647p_prv2,m_0_2147483647p_pub2)
+    testPub(t,m_0_2147483647p_prv2,m_0_2147483647p_pub2)
     t.Logf("third child")
-    testCkd(t,m_0_2147483647p_prv2,m_0_2147483647p_1_prv2,1)
+    testChild(t,m_0_2147483647p_prv2,m_0_2147483647p_1_prv2,1)
     t.Logf("third child -> pub")
-    testPrivtopub(t,m_0_2147483647p_1_prv2,m_0_2147483647p_1_pub2)
+    testPub(t,m_0_2147483647p_1_prv2,m_0_2147483647p_1_pub2)
     i = 2147483646 + 0x80000000
     t.Logf("fourth child")
-    testCkd(t,m_0_2147483647p_1_prv2,m_0_2147483647p_1_2147483646p_prv2,i)
+    testChild(t,m_0_2147483647p_1_prv2,m_0_2147483647p_1_2147483646p_prv2,i)
     t.Logf("fourth child -> pub")
-    testPrivtopub(t,m_0_2147483647p_1_2147483646p_prv2,m_0_2147483647p_1_2147483646p_pub2)
+    testPub(t,m_0_2147483647p_1_2147483646p_prv2,m_0_2147483647p_1_2147483646p_pub2)
     t.Logf("fifth child")
-    testCkd(t,m_0_2147483647p_1_2147483646p_prv2,m_0_2147483647p_1_2147483646p_2_prv2,2)
+    testChild(t,m_0_2147483647p_1_2147483646p_prv2,m_0_2147483647p_1_2147483646p_2_prv2,2)
     t.Logf("fifth child -> pub")
-    testPrivtopub(t,m_0_2147483647p_1_2147483646p_2_prv2,m_0_2147483647p_1_2147483646p_2_pub2)
+    testPub(t,m_0_2147483647p_1_2147483646p_2_prv2,m_0_2147483647p_1_2147483646p_2_pub2)
 }
 
-func TestCKDPub(t *testing.T) {
-    testCkd(t,m_pub2,m_0_pub2,0)
+func TestChildPub(t *testing.T) {
+    testChild(t,m_pub2,m_0_pub2,0)
 }
 
-func TestCKDPrv(t *testing.T) {
-    testCkd(t,m_prv2,m_0_prv2,0)
+func TestChildPrv(t *testing.T) {
+    testChild(t,m_prv2,m_0_prv2,0)
 }
 
 func TestSerialize(t *testing.T) {
-    if m_prv2 != StringWallet(m_prv2).String() {
+    w, err := StringWallet(m_prv2)
+    if err != nil {
+        t.Errorf("%s should have been nil",err.Error())
+    }
+    if m_prv2 != w.String() {
         t.Errorf("private key not de/reserializing properly")
     }
-    if m_pub2 != StringWallet(m_pub2).String() {
+    w,err = StringWallet(m_pub2)
+    if err != nil {
+        t.Errorf("%s should have been nil",err.Error())
+    }
+    if m_pub2 != w.String() {
         t.Errorf("public key not de/reserializing properly")
     }
 }
@@ -141,35 +156,34 @@ func TestSerialize(t *testing.T) {
 // Used this site to create test http://gobittest.appspot.com/Address
 // Public key: 04CBCAA9C98C877A26977D00825C956A238E8DDDFBD322CCE4F74B0B5BD6ACE4A77BD3305D363C26F82C1E41C667E4B3561C06C60A2104D2B548E6DD059056AA51
 // Expected address: 1AEg9dFEw29kMgaN4BNHALu7AzX5XUfzSU
-func TestPubtoaddress(t *testing.T) {
-    addr := StringToAddress(m_pub2)
+func TestAddress(t *testing.T) {
+    addr, err := StringAddress(m_pub2)
+    if err != nil {
+        t.Errorf("%s should have been nil",err.Error())
+    }
     expected_addr := "1AEg9dFEw29kMgaN4BNHALu7AzX5XUfzSU"
     if addr != expected_addr {
         t.Errorf("\n%s\nshould be\n%s",addr,expected_addr)
-        x, y := expand(StringWallet(m_pub2).Key)
-        four,_ := hex.DecodeString("04")
-        padded_key := append(four,append(x.Bytes(),y.Bytes()...)...)
-        t.Logf("Padded key: %X",padded_key)
     }
 }
 
-func TestIsvalidkey(t *testing.T) {
-    if ok := IsValidKey(m_pub2); !ok {
-        t.Errorf("%t should have been true",ok)
+func TestStringCheck(t *testing.T) {
+    if err := StringCheck(m_pub2); err != nil {
+        t.Errorf("%s should have been nil",err.Error())
     }
-    if ok := IsValidKey(m_prv2); !ok {
-        t.Errorf("%t should have been true",ok)
+    if err := StringCheck(m_prv2); err != nil {
+        t.Errorf("%s should have been nil",err.Error())
     }
 }
 // benchmarks
 
-func BenchmarkCKDPub(b *testing.B) {
+func BenchmarkStringChildPub(b *testing.B) {
     for i := 0; i < b.N; i++ {
         StringChild(m_pub2,0)
     }
 }
 
-func BenchmarkCKDPrv(b *testing.B) {
+func BenchmarkStringChildPrv(b *testing.B) {
     var a uint32
     a = 0x80000000
     for i := 0; i < b.N; i++ {
@@ -177,20 +191,21 @@ func BenchmarkCKDPrv(b *testing.B) {
     }
 }
 
-func BenchmarkPrivtopub(b *testing.B) {
+func BenchmarkStringPubString(b *testing.B) {
     for i := 0; i < b.N; i++ {
-        StringWallet(m_prv2).PrivToPub()
+        w, _ := StringWallet(m_prv2)
+        w.Pub().String()
     }
 }
 
-func BenchmarkPubtoaddress(b *testing.B) {
+func BenchmarkStringAddress(b *testing.B) {
     for i := 0; i < b.N; i++ {
-        StringToAddress(m_pub2)
+        StringAddress(m_pub2)
     }
 }
 
-func BenchmarkIsvalidkey(b *testing.B) {
+func BenchmarkStringCheck(b *testing.B) {
     for i := 0; i < b.N; i++ {
-        IsValidKey(m_pub2)
+        StringCheck(m_pub2)
     }
 }

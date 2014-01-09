@@ -1,6 +1,4 @@
-//based off https://github.com/vbuterin/pybitcointools/blob/master/pybitcointools/deterministic.py
-
-package hdwalletutil
+package hdwallet
 
 import (
     "bytes"
@@ -13,7 +11,7 @@ import (
     )
 
 var (
-    //mainnet
+    //MainNet
     Public []byte
     Private []byte
     )
@@ -23,6 +21,7 @@ func init() {
     Private,_ = hex.DecodeString("0488ADE4")
 }
 
+// HDWallet defines the components of a hierarchical deterministic wallet
 type HDWallet struct {
     Vbytes []byte //4 bytes
     Depth uint16 //1 byte
@@ -32,7 +31,10 @@ type HDWallet struct {
     Key []byte //33 bytes
 }
 
-func (w *HDWallet) Child(i uint32) *HDWallet {
+// Child returns the ith child of wallet w. Values of i >= 2^31
+// signify private key derivation. Attempting private key derivation
+// with a public key will throw an error.
+func (w *HDWallet) Child(i uint32) (*HDWallet,error) {
     var fingerprint, I , newkey []byte
     switch {
     case bytes.Compare(w.Vbytes, Private) == 0:
@@ -50,16 +52,17 @@ func (w *HDWallet) Child(i uint32) *HDWallet {
     case bytes.Compare(w.Vbytes, Public) == 0:
         mac := hmac.New(sha512.New, w.Chaincode)
         if i >= uint32(0x80000000) {
-            panic("Can't do Private derivation on Public key!")
+            return &HDWallet{}, errors.New("Can't do Private derivation on Public key!")
         }
         mac.Write(append(w.Key,uint32ToByte(i)...))
         I = mac.Sum(nil)
         newkey = addPubKeys(privToPub(I[:32]), w.Key)
         fingerprint = hash160(w.Key)[:4]
     }
-    return &HDWallet{w.Vbytes, w.Depth + 1, fingerprint, uint32ToByte(i), I[32:], newkey}
+    return &HDWallet{w.Vbytes, w.Depth + 1, fingerprint, uint32ToByte(i), I[32:], newkey}, nil
 }
 
+// Serialize returns the serialized form of the wallet.
 func (w *HDWallet) Serialize() []byte  {
     depth := uint16ToByte(uint16(w.Depth % 256))
     //bindata = vbytes||depth||fingerprint||i||chaincode||key
@@ -68,14 +71,16 @@ func (w *HDWallet) Serialize() []byte  {
     return append(bindata,chksum...)
 }
 
+// String returns the base58-encoded string form of the wallet.
 func (w *HDWallet) String() string  {
     return btcutil.Base58Encode(w.Serialize())
 }
 
-func StringWallet(data string) *HDWallet {
+// StringWallet returns a wallet given a base58-encoded extended key
+func StringWallet(data string) (*HDWallet,error) {
     dbin := btcutil.Base58Decode(data)
     if bytes.Compare(dblSha256(dbin[:(len(dbin)-4)])[:4], dbin[(len(dbin)-4):]) != 0 {
-        panic("Invalid checksum")
+        return &HDWallet{}, errors.New("Invalid checksum")
     }
     vbytes := dbin[0:4]
     depth := byteToUint16(dbin[4:5])
@@ -83,22 +88,46 @@ func StringWallet(data string) *HDWallet {
     i := dbin[9:13]
     chaincode := dbin[13:45]
     key := dbin[45:78]
-    return &HDWallet{vbytes, depth, fingerprint, i, chaincode, key}
+    return &HDWallet{vbytes, depth, fingerprint, i, chaincode, key}, nil
 }
 
-func (w *HDWallet) PrivToPub() *HDWallet {
-    return &HDWallet{Public, w.Depth, w.Fingerprint, w.I, w.Chaincode, privToPub(w.Key)}
+// Pub returns a new wallet which is the public key version of w.
+// If w is a public key, Pub returns a copy of w
+func (w *HDWallet) Pub() *HDWallet {
+    if bytes.Compare(w.Vbytes,Public) == 0 {
+        return &HDWallet{w.Vbytes, w.Depth, w.Fingerprint, w.I, w.Chaincode, w.Key}
+    } else {
+        return &HDWallet{Public, w.Depth, w.Fingerprint, w.I, w.Chaincode, privToPub(w.Key)}
+    }
 }
 
-func StringChild(data string ,i uint32) string {
-    return StringWallet(data).Child(i).String()
+// StringChild returns the ith base58-encoded extended key of a base58-encoded extended key.
+func StringChild(data string ,i uint32) (string, error) {
+    w, err := StringWallet(data)
+    if err != nil {
+        return "", err
+    } else {
+        w, err = w.Child(i)
+        if err != nil {
+            return "", err
+        } else {
+            return w.String(), nil
+        }
+    }
 }
 
-func StringToAddress(data string) string {
-    return StringWallet(data).ToAddress()
+//StringToAddress returns the Bitcoin address of a base58-encoded extended key.
+func StringAddress(data string) (string, error) {
+    w, err := StringWallet(data)
+    if err != nil {
+        return "", err
+    } else {
+        return w.Address(), nil
+    }
 }
 
-func (w *HDWallet) ToAddress() string {
+// Address returns bitcoin address represented by wallet w.
+func (w *HDWallet) Address() string {
     x, y := expand(w.Key)
     four,_ := hex.DecodeString("04")
     padded_key := append(four,append(x.Bytes(),y.Bytes()...)...)
@@ -108,6 +137,8 @@ func (w *HDWallet) ToAddress() string {
     return btcutil.Base58Encode(append(addr_1,chksum[:4]...))
 }
 
+// GenSeed returns a random seed with a length measured in bytes.
+// The length must be at least 128.
 func GenSeed(length int) ([]byte, error) {
     b := make([]byte, length)
     if length < 128 {
@@ -117,6 +148,7 @@ func GenSeed(length int) ([]byte, error) {
     return b, err
 }
 
+// MasterKey returns a new wallet given a random seed.
 func MasterKey(seed []byte) *HDWallet {
     key := []byte("Bitcoin seed")
     mac := hmac.New(sha512.New, key)
@@ -131,21 +163,23 @@ func MasterKey(seed []byte) *HDWallet {
     return &HDWallet{Private,uint16(depth),fingerprint,i,chain_code,append(zero,secret...)}
 }
 
-func IsValidKey(key string) bool {
+// StringCheck is a validation check of a base58-encoded extended key.
+func StringCheck(key string) error {
     dbin := btcutil.Base58Decode(key)
+    // check proper length
     if len(dbin) < 78 || len(dbin) > 82 {
-        return false
+        return errors.New("invalid string")
     }
     // check for correct Public or Private vbytes
     if bytes.Compare(dbin[:4],Public) != 0 && bytes.Compare(dbin[:4],Private) != 0 {
-        return false
+        return errors.New("invalid string")
     }
     // if Public, check x coord is on curve
     x, y := expand(dbin[45:78])
-    if bytes.Compare(dbin[:4],Private) != 0 {
+    if bytes.Compare(dbin[:4],Public) == 0 {
         if !onCurve(x,y) {
-            return false
+            return errors.New("invalid string")
         }
     }
-    return true
+    return nil
 }
