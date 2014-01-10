@@ -79,6 +79,9 @@ func (w *HDWallet) String() string  {
 // StringWallet returns a wallet given a base58-encoded extended key
 func StringWallet(data string) (*HDWallet,error) {
     dbin := btcutil.Base58Decode(data)
+    if err := ByteCheck(dbin); err != nil {
+        return &HDWallet{}, err
+    }
     if bytes.Compare(dblSha256(dbin[:(len(dbin)-4)])[:4], dbin[(len(dbin)-4):]) != 0 {
         return &HDWallet{}, errors.New("Invalid checksum")
     }
@@ -165,9 +168,12 @@ func MasterKey(seed []byte) *HDWallet {
 
 // StringCheck is a validation check of a base58-encoded extended key.
 func StringCheck(key string) error {
-    dbin := btcutil.Base58Decode(key)
+    return ByteCheck(btcutil.Base58Decode(key))
+}
+
+func ByteCheck(dbin []byte) error{
     // check proper length
-    if len(dbin) < 78 || len(dbin) > 82 {
+    if len(dbin) != 82 {
         return errors.New("invalid string")
     }
     // check for correct Public or Private vbytes
