@@ -14,11 +14,16 @@ var (
     //MainNet
     Public []byte
     Private []byte
+    //TestNet
+    TestPublic []byte
+    TestPrivate []byte
     )
 
 func init() {
     Public,_ = hex.DecodeString("0488B21E")
     Private,_ = hex.DecodeString("0488ADE4")
+    TestPublic,_ = hex.DecodeString("043587CF")
+    TestPrivate,_ = hex.DecodeString("04358394")
 }
 
 // HDWallet defines the components of a hierarchical deterministic wallet
@@ -37,7 +42,7 @@ type HDWallet struct {
 func (w *HDWallet) Child(i uint32) (*HDWallet,error) {
     var fingerprint, I , newkey []byte
     switch {
-    case bytes.Compare(w.Vbytes, Private) == 0:
+    case bytes.Compare(w.Vbytes, Private) == 0, bytes.Compare(w.Vbytes, TestPrivate) == 0:
         pub := privToPub(w.Key)
         mac := hmac.New(sha512.New, w.Chaincode)
         if i >= uint32(0x80000000) {
@@ -49,7 +54,7 @@ func (w *HDWallet) Child(i uint32) (*HDWallet,error) {
         newkey = addPrivKeys(I[:32], w.Key)
         fingerprint = hash160(privToPub(w.Key))[:4]
 
-    case bytes.Compare(w.Vbytes, Public) == 0:
+    case bytes.Compare(w.Vbytes, Public) == 0, bytes.Compare(w.Vbytes, TestPrivate) == 0:
         mac := hmac.New(sha512.New, w.Chaincode)
         if i >= uint32(0x80000000) {
             return &HDWallet{}, errors.New("Can't do Private derivation on Public key!")
@@ -134,8 +139,13 @@ func (w *HDWallet) Address() string {
     x, y := expand(w.Key)
     four,_ := hex.DecodeString("04")
     padded_key := append(four,append(x.Bytes(),y.Bytes()...)...)
-    zero,_ := hex.DecodeString("00")
-    addr_1 := append(zero,hash160(padded_key)...)
+    var prefix []byte
+    if bytes.Compare(w.Vbytes,TestPublic) == 0 || bytes.Compare(w.Vbytes,TestPrivate) == 0 {
+        prefix,_ = hex.DecodeString("6F")
+    } else {
+        prefix,_ = hex.DecodeString("00")
+    }
+    addr_1 := append(prefix,hash160(padded_key)...)
     chksum := dblSha256(addr_1)
     return btcutil.Base58Encode(append(addr_1,chksum[:4]...))
 }
@@ -177,12 +187,12 @@ func ByteCheck(dbin []byte) error{
         return errors.New("invalid string")
     }
     // check for correct Public or Private vbytes
-    if bytes.Compare(dbin[:4],Public) != 0 && bytes.Compare(dbin[:4],Private) != 0 {
+    if bytes.Compare(dbin[:4],Public) != 0 && bytes.Compare(dbin[:4],Private) != 0 && bytes.Compare(dbin[:4],TestPublic) != 0 && bytes.Compare(dbin[:4],TestPrivate) != 0 {
         return errors.New("invalid string")
     }
     // if Public, check x coord is on curve
     x, y := expand(dbin[45:78])
-    if bytes.Compare(dbin[:4],Public) == 0 {
+    if bytes.Compare(dbin[:4],Public) == 0 || bytes.Compare(dbin[:4],TestPublic) == 0 {
         if !onCurve(x,y) {
             return errors.New("invalid string")
         }
