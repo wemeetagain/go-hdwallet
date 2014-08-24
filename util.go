@@ -36,16 +36,15 @@
 package hdwallet
 
 import (
-    "crypto/elliptic"
     "crypto/sha256"
     "code.google.com/p/go.crypto/ripemd160"
     "encoding/binary"
     "encoding/hex"
-    "github.com/mndrix/btcutil"
+    "github.com/conformal/btcec"
     "math/big"
     )
 
-var curve elliptic.Curve = btcutil.Secp256k1()
+var curve *btcec.KoblitzCurve = btcec.S256()
 
 func hash160(data []byte) []byte {
     sha := sha256.New()

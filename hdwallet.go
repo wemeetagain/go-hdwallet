@@ -7,6 +7,7 @@ import (
     "crypto/rand"
     "encoding/hex"
     "errors"
+    "math/big"
     "github.com/conformal/btcutil"
     )
 
@@ -51,16 +52,24 @@ func (w *HDWallet) Child(i uint32) (*HDWallet,error) {
             mac.Write(append(pub,uint32ToByte(i)...))
         }
         I = mac.Sum(nil)
+         iL := new(big.Int).SetBytes(I[:32])
+        if iL.Cmp(curve.N) >= 0 || iL.Sign() == 0 {
+            return &HDWallet{}, errors.New("Invalid Child")
+        }
         newkey = addPrivKeys(I[:32], w.Key)
         fingerprint = hash160(privToPub(w.Key))[:4]
 
-    case bytes.Compare(w.Vbytes, Public) == 0, bytes.Compare(w.Vbytes, TestPrivate) == 0:
+    case bytes.Compare(w.Vbytes, Public) == 0, bytes.Compare(w.Vbytes, TestPublic) == 0:
         mac := hmac.New(sha512.New, w.Chaincode)
         if i >= uint32(0x80000000) {
             return &HDWallet{}, errors.New("Can't do Private derivation on Public key!")
         }
         mac.Write(append(w.Key,uint32ToByte(i)...))
         I = mac.Sum(nil)
+        iL := new(big.Int).SetBytes(I[:32])
+        if iL.Cmp(curve.N) >= 0 || iL.Sign() == 0 {
+            return &HDWallet{}, errors.New("Invalid Child")
+        }
         newkey = addPubKeys(privToPub(I[:32]), w.Key)
         fingerprint = hash160(w.Key)[:4]
     }

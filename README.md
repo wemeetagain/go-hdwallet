@@ -35,7 +35,7 @@ Go HD Wallet tools
 
         go get code.google.com/p/go.crypto/ripemd160
         go get github.com/conformal/btcutil
-        go get github.com/mndrix/btcutil
+        go get github.com/conformal/btcec
 
 ###Donate
-If you found this useful, consider donating to 17yHkgQooxxMdB7iqNbBXDrV8YdMrMes5d
+If you found this useful, consider donating to 15bi481QnYeMXEcS3nUUBXWFq2XqJBFCRQ
