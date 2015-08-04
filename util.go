@@ -40,7 +40,7 @@ import (
     "code.google.com/p/go.crypto/ripemd160"
     "encoding/binary"
     "encoding/hex"
-    "github.com/conformal/btcec"
+    "github.com/btcsuite/btcd/btcec"
     "math/big"
     )
 

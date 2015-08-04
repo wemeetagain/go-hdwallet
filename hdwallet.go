@@ -8,7 +8,7 @@ import (
     "encoding/hex"
     "errors"
     "math/big"
-    "github.com/conformal/btcutil"
+    "github.com/btcsuite/btcutil/base58"
     )
 
 var (
@@ -87,12 +87,12 @@ func (w *HDWallet) Serialize() []byte  {
 
 // String returns the base58-encoded string form of the wallet.
 func (w *HDWallet) String() string  {
-    return btcutil.Base58Encode(w.Serialize())
+    return base58.Encode(w.Serialize())
 }
 
 // StringWallet returns a wallet given a base58-encoded extended key
 func StringWallet(data string) (*HDWallet,error) {
-    dbin := btcutil.Base58Decode(data)
+    dbin := base58.Decode(data)
     if err := ByteCheck(dbin); err != nil {
         return &HDWallet{}, err
     }
@@ -156,7 +156,7 @@ func (w *HDWallet) Address() string {
     }
     addr_1 := append(prefix,hash160(padded_key)...)
     chksum := dblSha256(addr_1)
-    return btcutil.Base58Encode(append(addr_1,chksum[:4]...))
+    return base58.Encode(append(addr_1,chksum[:4]...))
 }
 
 // GenSeed returns a random seed with a length measured in bytes.
@@ -187,7 +187,7 @@ func MasterKey(seed []byte) *HDWallet {
 
 // StringCheck is a validation check of a base58-encoded extended key.
 func StringCheck(key string) error {
-    return ByteCheck(btcutil.Base58Decode(key))
+    return ByteCheck(base58.Decode(key))
 }
 
 func ByteCheck(dbin []byte) error{
