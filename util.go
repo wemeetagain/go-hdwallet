@@ -36,12 +36,13 @@
 package hdwallet
 
 import (
-	"code.google.com/p/go.crypto/ripemd160"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
-	"github.com/btcsuite/btcd/btcec"
 	"math/big"
+
+	"github.com/btcsuite/btcd/btcec"
+	"golang.org/x/crypto/ripemd160"
 )
 
 var curve *btcec.KoblitzCurve = btcec.S256()

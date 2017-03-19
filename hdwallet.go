@@ -7,8 +7,9 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"errors"
-	"github.com/btcsuite/btcutil/base58"
 	"math/big"
+
+	"github.com/btcsuite/btcutil/base58"
 )
 
 var (
