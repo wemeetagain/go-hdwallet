@@ -111,9 +111,11 @@ func StringWallet(data string) (*HDWallet, error) {
 
 // Pub returns a new wallet which is the public key version of w.
 // If w is a public key, Pub returns a copy of w
-func (w *HDWallet) Pub() *HDWallet {
-	if bytes.Compare(w.Vbytes, Public) == 0 {
+func (w *HDWallet) Pub(isTestNet bool) *HDWallet {
+	if bytes.Compare(w.Vbytes, Public) == 0 || bytes.Compare(w.Vbytes, TestPublic) == 0{
 		return &HDWallet{w.Vbytes, w.Depth, w.Fingerprint, w.I, w.Chaincode, w.Key}
+	} else if isTestNet{
+		return &HDWallet{TestPublic, w.Depth, w.Fingerprint, w.I, w.Chaincode, privToPub(w.Key)}
 	} else {
 		return &HDWallet{Public, w.Depth, w.Fingerprint, w.I, w.Chaincode, privToPub(w.Key)}
 	}
@@ -172,7 +174,7 @@ func GenSeed(length int) ([]byte, error) {
 }
 
 // MasterKey returns a new wallet given a random seed.
-func MasterKey(seed []byte) *HDWallet {
+func MasterKey(seed []byte, isTestNet bool) *HDWallet {
 	key := []byte("Bitcoin seed")
 	mac := hmac.New(sha512.New, key)
 	mac.Write(seed)
@@ -183,7 +185,11 @@ func MasterKey(seed []byte) *HDWallet {
 	i := make([]byte, 4)
 	fingerprint := make([]byte, 4)
 	zero := make([]byte, 1)
-	return &HDWallet{Private, uint16(depth), fingerprint, i, chain_code, append(zero, secret...)}
+	if isTestNet {
+		return &HDWallet{TestPrivate, uint16(depth), fingerprint, i, chain_code, append(zero, secret...)}
+	} else {
+		return &HDWallet{Private, uint16(depth), fingerprint, i, chain_code, append(zero, secret...)}
+	}
 }
 
 // StringCheck is a validation check of a base58-encoded extended key.
