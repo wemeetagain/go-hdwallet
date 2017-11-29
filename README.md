@@ -4,11 +4,11 @@ Go HD Wallet tools
  - BIP32 - https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
  - Documentation - http://godoc.org/github.com/WeMeetAgain/go-hdwallet
 
-###Get this library
+### Get this library
 
         go get github.com/WeMeetAgain/go-hdwallet
 
-###Example
+### Example
 
         // Generate a random 256 bit seed
         seed, err := hdwallet.GenSeed(256)
@@ -31,11 +31,9 @@ Go HD Wallet tools
         childstring, err := hdwallet.StringChild(walletstring,0)
         childaddress, err := hdwallet.StringAddress(childstring)
 
-###Dependencies
+### Dependencies
 
         go get code.google.com/p/go.crypto/ripemd160
         go get github.com/conformal/btcutil
         go get github.com/conformal/btcec
 
-###Donate
-If you found this useful, consider donating to 15bi481QnYeMXEcS3nUUBXWFq2XqJBFCRQ
