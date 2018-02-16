@@ -80,10 +80,19 @@ func (w *HDWallet) Child(i uint32) (*HDWallet, error) {
 // Serialize returns the serialized form of the wallet.
 func (w *HDWallet) Serialize() []byte {
 	depth := uint16ToByte(uint16(w.Depth % 256))
-	//bindata = vbytes||depth||fingerprint||i||chaincode||key
-	bindata := append(w.Vbytes, append(depth, append(w.Fingerprint, append(w.I, append(w.Chaincode, w.Key...)...)...)...)...)
+
+	bindata := []byte{}
+	bindata = append(bindata, w.Vbytes...)
+	bindata = append(bindata, depth...)
+	bindata = append(bindata, w.Fingerprint...)
+	bindata = append(bindata, w.I...)
+	bindata = append(bindata, w.Chaincode...)
+	bindata = append(bindata, w.Key...)
+
 	chksum := dblSha256(bindata)[:4]
-	return append(bindata, chksum...)
+	bindata = append(bindata, chksum...)
+
+	return bindata
 }
 
 // String returns the base58-encoded string form of the wallet.
