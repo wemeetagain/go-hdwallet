@@ -31,7 +31,7 @@ func init() {
 // HDWallet defines the components of a hierarchical deterministic wallet
 type HDWallet struct {
 	Vbytes      []byte //4 bytes
-	Depth       uint16 //1 byte
+	Depth       uint32 //4 byte
 	Fingerprint []byte //4 bytes
 	I           []byte //4 bytes
 	Chaincode   []byte //32 bytes
@@ -79,7 +79,7 @@ func (w *HDWallet) Child(i uint32) (*HDWallet, error) {
 
 // Serialize returns the serialized form of the wallet.
 func (w *HDWallet) Serialize() []byte {
-	depth := uint16ToByte(uint16(w.Depth % 256))
+	depth := uint32ToByte(uint32(w.Depth % 256))
 
 	bindata := []byte{}
 	bindata = append(bindata, w.Vbytes...)
@@ -110,11 +110,11 @@ func StringWallet(data string) (*HDWallet, error) {
 		return &HDWallet{}, errors.New("Invalid checksum")
 	}
 	vbytes := dbin[0:4]
-	depth := byteToUint16(dbin[4:5])
-	fingerprint := dbin[5:9]
-	i := dbin[9:13]
-	chaincode := dbin[13:45]
-	key := dbin[45:78]
+	depth := byteToUint32(dbin[4:8])
+	fingerprint := dbin[8:12]
+	i := dbin[12:16]
+	chaincode := dbin[16:48]
+	key := dbin[48:81]
 	return &HDWallet{vbytes, depth, fingerprint, i, chaincode, key}, nil
 }
 
@@ -192,7 +192,7 @@ func MasterKey(seed []byte) *HDWallet {
 	i := make([]byte, 4)
 	fingerprint := make([]byte, 4)
 	zero := make([]byte, 1)
-	return &HDWallet{Private, uint16(depth), fingerprint, i, chain_code, append(zero, secret...)}
+	return &HDWallet{Private, uint32(depth), fingerprint, i, chain_code, append(zero, secret...)}
 }
 
 // StringCheck is a validation check of a base58-encoded extended key.
@@ -202,7 +202,7 @@ func StringCheck(key string) error {
 
 func ByteCheck(dbin []byte) error {
 	// check proper length
-	if len(dbin) != 82 {
+	if len(dbin) != 85 {
 		return errors.New("invalid string")
 	}
 	// check for correct Public or Private vbytes
@@ -210,7 +210,7 @@ func ByteCheck(dbin []byte) error {
 		return errors.New("invalid string")
 	}
 	// if Public, check x coord is on curve
-	x, y := expand(dbin[45:78])
+	x, y := expand(dbin[48:81])
 	if bytes.Compare(dbin[:4], Public) == 0 || bytes.Compare(dbin[:4], TestPublic) == 0 {
 		if !onCurve(x, y) {
 			return errors.New("invalid string")

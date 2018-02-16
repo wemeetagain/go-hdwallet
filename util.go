@@ -136,3 +136,11 @@ func byteToUint16(b []byte) uint16 {
 	}
 	return binary.BigEndian.Uint16(b)
 }
+
+func byteToUint32(b []byte) uint32 {
+	if len(b) == 1 {
+		zero := make([]byte, 3)
+		b = append(zero, b...)
+	}
+	return binary.BigEndian.Uint32(b)
+}
