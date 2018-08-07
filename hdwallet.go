@@ -81,7 +81,24 @@ func (w *HDWallet) Child(i uint32) (*HDWallet, error) {
 func (w *HDWallet) Serialize() []byte {
 	depth := uint16ToByte(uint16(w.Depth % 256))
 	//bindata = vbytes||depth||fingerprint||i||chaincode||key
-	bindata := append(w.Vbytes, append(depth, append(w.Fingerprint, append(w.I, append(w.Chaincode, w.Key...)...)...)...)...)
+	n := HDWallet{}
+
+	n.Vbytes = make([]byte, len(w.Vbytes))
+	copy(n.Vbytes, w.Vbytes)
+
+	n.Key = make([]byte, len(w.Key))
+	copy(n.Key, w.Key)
+
+	n.Chaincode = make([]byte, len(w.Chaincode))
+	copy(n.Chaincode, w.Chaincode)
+
+	n.I = make([]byte, len(w.I))
+	copy(n.I, w.I)
+
+	n.Fingerprint = make([]byte, len(w.Fingerprint))
+	copy(n.Fingerprint, w.Fingerprint)
+
+	bindata := append(n.Vbytes, append(depth, append(n.Fingerprint, append(n.I, append(n.Chaincode, n.Key...)...)...)...)...)
 	chksum := dblSha256(bindata)[:4]
 	return append(bindata, chksum...)
 }
