@@ -78,7 +78,14 @@ func compress(x, y *big.Int) []byte {
 	b := make([]byte, 2)
 	binary.BigEndian.PutUint16(b, uint16(rem))
 	rest := x.Bytes()
-	return append(b[1:], rest...)
+	pad := 32 - len(rest)
+	if pad != 0 {
+		padRaw := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+		return append(b[1:], append(padRaw[:pad], rest...)...)
+
+	} else {
+		return append(b[1:], rest...)
+	}
 }
 
 //2.3.4 of SEC1 - http://www.secg.org/index.php?action=secg,docs_secg
