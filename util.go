@@ -78,6 +78,11 @@ func compress(x, y *big.Int) []byte {
 	b := make([]byte, 2)
 	binary.BigEndian.PutUint16(b, uint16(rem))
 	rest := x.Bytes()
+	pad := 32 - len(rest)
+	if pad != 0 {
+		zeroes := make([]byte, pad)
+		rest = append(zeroes, rest...)
+	}
 	return append(b[1:], rest...)
 }
 
