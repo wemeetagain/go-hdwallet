@@ -80,12 +80,10 @@ func compress(x, y *big.Int) []byte {
 	rest := x.Bytes()
 	pad := 32 - len(rest)
 	if pad != 0 {
-		padRaw := []byte{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-		return append(b[1:], append(padRaw[:pad], rest...)...)
-
-	} else {
-		return append(b[1:], rest...)
+		zeroes := make([]byte, pad)
+		rest = append(zeroes, rest...)
 	}
+	return append(b[1:], rest...)
 }
 
 //2.3.4 of SEC1 - http://www.secg.org/index.php?action=secg,docs_secg
