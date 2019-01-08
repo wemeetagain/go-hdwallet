@@ -34,6 +34,9 @@ var (
 	m_0_2147483647p_1_2147483646p_prv2   string = "xprvA1RpRA33e1JQ7ifknakTFpgNXPmW2YvmhqLQYMmrj4xJXXWYpDPS3xz7iAxn8L39njGVyuoseXzU6rcxFLJ8HFsTjSyQbLYnMpCqE2VbFWc"
 	m_0_2147483647p_1_2147483646p_2_pub2 string = "xpub6FnCn6nSzZAw5Tw7cgR9bi15UV96gLZhjDstkXXxvCLsUXBGXPdSnLFbdpq8p9HmGsApME5hQTZ3emM2rnY5agb9rXpVGyy3bdW6EEgAtqt"
 	m_0_2147483647p_1_2147483646p_2_prv2 string = "xprvA2nrNbFZABcdryreWet9Ea4LvTJcGsqrMzxHx98MMrotbir7yrKCEXw7nadnHM8Dq38EGfSh6dqA9QWTyefMLEcBYJUuekgW4BYPJcr9E7j"
+
+    issue_6_arg0                         string = "xpub69h25So7Uyn2eBeQEMSz5CCEzB5xNCfXqRrQHPsS5czEuobfNXnGujVggFExRgozt6ujR85UaR9DHdGUhGaNL6CRP8xhpEXJJaa9rGytn7C"
+    issue_6_arg1                         uint32 = 36
 )
 
 func testChild(t *testing.T, key, ref_key string, i uint32) {
@@ -173,6 +176,15 @@ func TestStringCheck(t *testing.T) {
 	if err := StringCheck(m_prv2); err != nil {
 		t.Errorf("%s should have been nil", err.Error())
 	}
+}
+
+func TestIssue6(t *testing.T) {
+    defer func() {
+        if r := recover(); r != nil {
+            t.Errorf("StringChild should not panic")
+        }
+    }()
+    StringChild(issue_6_arg0, issue_6_arg1)
 }
 
 // benchmarks
