@@ -2,6 +2,7 @@ package hdwallet
 
 import (
 	"encoding/hex"
+    "reflect"
 	"testing"
 )
 
@@ -185,6 +186,18 @@ func TestIssue6(t *testing.T) {
         }
     }()
     StringChild(issue_6_arg0, issue_6_arg1)
+}
+
+func TestIssue11(t *testing.T) {
+    seed, _ := GenSeed(128)
+    wallet_1 := MasterKey(seed)
+    wallet_2 := MasterKey(seed)
+
+    wallet_1.Serialize()
+
+    if !reflect.DeepEqual(wallet_1, wallet_2) {
+        t.Errorf("Serialize should not modify its HDWallet")
+    }
 }
 
 // benchmarks
