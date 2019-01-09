@@ -1,12 +1,12 @@
-Go HD Wallet tools
+Go HD Wallet tools [![Build Status](https://travis-ci.org/wemeetagain/go-hdwallet.svg?branch=master)](https://travis-ci.org/wemeetagain/go-hdwallet)
 ------------------
 
  - BIP32 - https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
- - Documentation - http://godoc.org/github.com/WeMeetAgain/go-hdwallet
+ - Documentation - http://godoc.org/github.com/wemeetagain/go-hdwallet
 
 ### Get this library
 
-        go get github.com/WeMeetAgain/go-hdwallet
+        go get github.com/wemeetagain/go-hdwallet
 
 ### Example
 
@@ -28,12 +28,15 @@ Go HD Wallet tools
 
         // Convenience string -> string Child and ToAddress functions
         walletstring := childpub.String()
-        childstring, err := hdwallet.StringChild(walletstring,0)
+        childstring, err := hdwallet.StringChild(walletstring, 0)
         childaddress, err := hdwallet.StringAddress(childstring)
 
 ### Dependencies
 
-        go get code.google.com/p/go.crypto/ripemd160
-        go get github.com/conformal/btcutil
-        go get github.com/conformal/btcec
+        go get golang.org/x/crypto/ripemd160
+        go get github.com/btcsuite/btcutil/base58
+        go get github.com/btcsuite/btcd/btcec
 
+### License
+
+Unlicense
