@@ -140,7 +140,7 @@ func StringChild(data string, i uint32) (string, error) {
 	}
 }
 
-//StringToAddress returns the Bitcoin address of a base58-encoded extended key.
+//StringAddress returns the Bitcoin address of a base58-encoded extended key.
 func StringAddress(data string) (string, error) {
 	w, err := StringWallet(data)
 	if err != nil {
