@@ -140,23 +140,13 @@ func StringChild(data string, i uint32) (string, error) {
 	}
 }
 
-//StringAddress returns the Bitcoin address of a base58-encoded extended key.
-func StringAddress(data string) (string, error) {
-	w, err := StringWallet(data)
-	if err != nil {
-		return "", err
-	} else {
-		return w.Address(), nil
-	}
-}
-
 // Address returns bitcoin address represented by wallet w.
-func (w *HDWallet) Address() string {
+func (w *HDWallet) Address(isTestnet bool) string {
 	x, y := expand(w.Key)
 	four, _ := hex.DecodeString("04")
 	padded_key := append(four, append(x.Bytes(), y.Bytes()...)...)
 	var prefix []byte
-	if bytes.Compare(w.Vbytes, TestPublic) == 0 || bytes.Compare(w.Vbytes, TestPrivate) == 0 {
+	if isTestnet {
 		prefix, _ = hex.DecodeString("6F")
 	} else {
 		prefix, _ = hex.DecodeString("00")
